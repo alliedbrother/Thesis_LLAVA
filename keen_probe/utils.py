@@ -8,14 +8,17 @@ from llava.conversation import conv_templates
 from torch.utils.data import Dataset
 import traceback
 
-device = 'cpu'  # Force CPU usage
+# Set device based on CUDA availability
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
+
 model_path = "liuhaotian/llava-v1.5-7b"
 
 print("Initializing model...")
-# Configure for CPU with memory efficiency
+# Configure for GPU if available, otherwise CPU
 kwargs = {
-    "device_map": "cpu",
-    "torch_dtype": torch.float32,  # Use float32 for CPU
+    "device_map": "cuda:0" if torch.cuda.is_available() else "cpu",  # Explicitly set to cuda:0
+    "torch_dtype": torch.float16 if torch.cuda.is_available() else torch.float32,
     "load_8bit": False,
     "load_4bit": False
 }
@@ -28,13 +31,27 @@ tokenizer, model, image_processor, context_len = load_pretrained_model(
 )
 
 print("Model loaded successfully")
-print("Configuring components for float32...")
+print("Configuring components...")
 
-# Configure all components for float32
-image_processor.torch_dtype = torch.float32
-model.to(torch.float32)
+# Configure all components for the appropriate dtype and device
+dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+image_processor.torch_dtype = dtype
+
+# Move model and its components to the correct device
+model.to(device)
+model.to(dtype)
+
+# Ensure vision tower is on the correct device
 vision_tower = model.get_vision_tower()
-vision_tower.to(torch.float32)
+if vision_tower is not None:
+    vision_tower.to(device)
+    vision_tower.to(dtype)
+    
+# Ensure mm_projector is on the correct device
+if hasattr(model.model, 'mm_projector'):
+    model.model.mm_projector.to(device)
+    model.model.mm_projector.to(dtype)
+
 model.eval()
 
 print("Components configured successfully")
@@ -44,6 +61,8 @@ def process_image(image, processor):
     try:
         # Convert PIL Image to tensor
         processed = processor(images=image, return_tensors='pt')
+        # Ensure correct dtype
+        processed['pixel_values'] = processed['pixel_values'].to(dtype=model.dtype)
         return processed['pixel_values']
     except Exception as e:
         print(f"Error in process_image: {str(e)}")
@@ -128,8 +147,12 @@ def extract_embeddings(tensor, prompt):
     try:
         # Get vision embeddings
         with torch.no_grad():
+            # Ensure tensor is in the correct dtype
+            tensor = tensor.to(dtype=model.dtype)
             # Get vision tower output
             vision_embeddings = model.model.vision_tower(tensor)
+            # Ensure vision embeddings are in the correct dtype
+            vision_embeddings = vision_embeddings.to(dtype=model.dtype)
             # Project vision embeddings
             projected_vision = model.model.mm_projector(vision_embeddings)
             vision_features = projected_vision.mean(dim=1)  # [1, hidden_size]

@@ -174,3 +174,8 @@ cython_debug/
 .pypirc
 annotations/instances_train2017.json
 annotations/person_keypoints_train2017.json
+
+# Large data files
+keen_probe/keen_data/detailed_embeddings.json
+keen_probe/keen_data/generation_embeddings.h5
+keen_probe/keen_data/generation_embeddings.json

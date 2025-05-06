@@ -1,0 +1,121 @@
+Vision-Only Embeddings:
+Layer 1: 4096 dimensions
+Layer 31: 4096 dimensions
+
+Vision-Query Embeddings:
+
+Layer 1:
+  Position 0 : Token ''<s>'': 4096 dimensions
+  Position 1 : Token ''▁A'': 4096 dimensions
+  Position 2 : Token ''▁chat'': 4096 dimensions
+  Position 3 : Token ''▁between'': 4096 dimensions
+  Position 4 : Token ''▁a'': 4096 dimensions
+  Position 5 : Token ''▁curious'': 4096 dimensions
+  Position 6 : Token ''▁human'': 4096 dimensions
+  Position 7 : Token ''▁and'': 4096 dimensions
+  Position 8 : Token ''▁an'': 4096 dimensions
+  Position 9 : Token ''▁artificial'': 4096 dimensions
+  Position 10: Token ''▁intelligence'': 4096 dimensions
+  Position 11: Token ''▁assistant'': 4096 dimensions
+  Position 12: Token ''.'': 4096 dimensions
+  Position 13: Token ''▁The'': 4096 dimensions
+  Position 14: Token ''▁assistant'': 4096 dimensions
+  Position 15: Token ''▁gives'': 4096 dimensions
+  Position 16: Token ''▁helpful'': 4096 dimensions
+  Position 17: Token ''': 4096 dimensions
+  Position 18: Token ''▁detailed'': 4096 dimensions
+  Position 19: Token ''': 4096 dimensions
+  Position 20: Token ''▁and'': 4096 dimensions
+  Position 21: Token ''▁pol'': 4096 dimensions
+  Position 22: Token ''ite'': 4096 dimensions
+  Position 23: Token ''▁answers'': 4096 dimensions
+  Position 24: Token ''▁to'': 4096 dimensions
+  Position 25: Token ''▁the'': 4096 dimensions
+  Position 26: Token ''▁human'': 4096 dimensions
+  Position 27: Token ''''': 4096 dimensions
+  Position 28: Token ''s'': 4096 dimensions
+  Position 29: Token ''▁questions'': 4096 dimensions
+  Position 30: Token ''.'': 4096 dimensions
+  Position 31: Token ''▁US'': 4096 dimensions
+  Position 32: Token ''ER'': 4096 dimensions
+  Position 33: Token '':'': 4096 dimensions
+  Position 34: Token ''▁'': 4096 dimensions
+  Position 35: Token ''<id_-200>'': 4096 dimensions
+  Position 36: Token ''▁'': 4096 dimensions
+  Position 37: Token ''<0x0A>'': 4096 dimensions
+  Position 38: Token ''Gener'': 4096 dimensions
+  Position 39: Token ''ate'': 4096 dimensions
+  Position 40: Token ''▁a'': 4096 dimensions
+  Position 41: Token ''▁conc'': 4096 dimensions
+  Position 42: Token ''ise'': 4096 dimensions
+  Position 43: Token ''▁and'': 4096 dimensions
+  Position 44: Token ''▁accurate'': 4096 dimensions
+  Position 45: Token ''▁ca'': 4096 dimensions
+  Position 46: Token ''ption'': 4096 dimensions
+  Position 47: Token ''▁for'': 4096 dimensions
+  Position 48: Token ''▁this'': 4096 dimensions
+  Position 49: Token ''▁image'': 4096 dimensions
+  Position 50: Token ''.'': 4096 dimensions
+  Position 51: Token ''▁A'': 4096 dimensions
+  Position 52: Token ''SS'': 4096 dimensions
+  Position 53: Token ''IST'': 4096 dimensions
+  Position 54: Token ''ANT'': 4096 dimensions
+  Position 55: Token '':'': 4096 dimensions
+
+Layer 31:
+  Position 0 : Token ''<s>'': 4096 dimensions
+  Position 1 : Token ''▁A'': 4096 dimensions
+  Position 2 : Token ''▁chat'': 4096 dimensions
+  Position 3 : Token ''▁between'': 4096 dimensions
+  Position 4 : Token ''▁a'': 4096 dimensions
+  Position 5 : Token ''▁curious'': 4096 dimensions
+  Position 6 : Token ''▁human'': 4096 dimensions
+  Position 7 : Token ''▁and'': 4096 dimensions
+  Position 8 : Token ''▁an'': 4096 dimensions
+  Position 9 : Token ''▁artificial'': 4096 dimensions
+  Position 10: Token ''▁intelligence'': 4096 dimensions
+  Position 11: Token ''▁assistant'': 4096 dimensions
+  Position 12: Token ''.'': 4096 dimensions
+  Position 13: Token ''▁The'': 4096 dimensions
+  Position 14: Token ''▁assistant'': 4096 dimensions
+  Position 15: Token ''▁gives'': 4096 dimensions
+  Position 16: Token ''▁helpful'': 4096 dimensions
+  Position 17: Token ''': 4096 dimensions
+  Position 18: Token ''▁detailed'': 4096 dimensions
+  Position 19: Token ''': 4096 dimensions
+  Position 20: Token ''▁and'': 4096 dimensions
+  Position 21: Token ''▁pol'': 4096 dimensions
+  Position 22: Token ''ite'': 4096 dimensions
+  Position 23: Token ''▁answers'': 4096 dimensions
+  Position 24: Token ''▁to'': 4096 dimensions
+  Position 25: Token ''▁the'': 4096 dimensions
+  Position 26: Token ''▁human'': 4096 dimensions
+  Position 27: Token ''''': 4096 dimensions
+  Position 28: Token ''s'': 4096 dimensions
+  Position 29: Token ''▁questions'': 4096 dimensions
+  Position 30: Token ''.'': 4096 dimensions
+  Position 31: Token ''▁US'': 4096 dimensions
+  Position 32: Token ''ER'': 4096 dimensions
+  Position 33: Token '':'': 4096 dimensions
+  Position 34: Token ''▁'': 4096 dimensions
+  Position 35: Token ''<id_-200>'': 4096 dimensions
+  Position 36: Token ''▁'': 4096 dimensions
+  Position 37: Token ''<0x0A>'': 4096 dimensions
+  Position 38: Token ''Gener'': 4096 dimensions
+  Position 39: Token ''ate'': 4096 dimensions
+  Position 40: Token ''▁a'': 4096 dimensions
+  Position 41: Token ''▁conc'': 4096 dimensions
+  Position 42: Token ''ise'': 4096 dimensions
+  Position 43: Token ''▁and'': 4096 dimensions
+  Position 44: Token ''▁accurate'': 4096 dimensions
+  Position 45: Token ''▁ca'': 4096 dimensions
+  Position 46: Token ''ption'': 4096 dimensions
+  Position 47: Token ''▁for'': 4096 dimensions
+  Position 48: Token ''▁this'': 4096 dimensions
+  Position 49: Token ''▁image'': 4096 dimensions
+  Position 50: Token ''.'': 4096 dimensions
+  Position 51: Token ''▁A'': 4096 dimensions
+  Position 52: Token ''SS'': 4096 dimensions
+  Position 53: Token ''IST'': 4096 dimensions
+  Position 54: Token ''ANT'': 4096 dimensions
+  Position 55: Token '':'': 4096 dimensions

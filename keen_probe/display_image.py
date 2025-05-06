@@ -1,43 +1,62 @@
+# File: display_image.py
+
 import os
 import sys
 from PIL import Image
 import matplotlib.pyplot as plt
 
-def display_image(image_number):
-    # Get the base directory
+def display_image(image_name):
+    try:
+        # Get the absolute path to the image directory
     base_dir = os.path.dirname(__file__)
     image_dir = os.path.abspath(os.path.join(base_dir, "..", "coco_val2017"))
-    
-    # List all jpg files
-    image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.jpg')])
-    
-    # Check if the image number is valid
-    if image_number < 0 or image_number >= len(image_files):
-        print(f"Error: Image number must be between 0 and {len(image_files)-1}")
+        image_path = os.path.join(image_dir, image_name)
+        
+        print(f"Looking for image: {image_path}")
+        
+        # Check if image exists
+        if not os.path.isfile(image_path):
+            print(f"Error: Image {image_name} not found in {image_dir}")
+            # List available images
+            image_files = [f for f in os.listdir(image_dir) if f.endswith('.jpg')]
+            if image_files:
+                print("\nAvailable images:")
+                for f in image_files[:5]:  # Show first 5 images
+                    print(f"  - {f}")
+                print(f"... and {len(image_files) - 5} more")
         return
     
-    # Get the image path
-    image_path = os.path.join(image_dir, image_files[image_number])
+        # Try to set a display backend
+        try:
+            plt.switch_backend('TkAgg')
+        except:
+            try:
+                plt.switch_backend('Agg')
+            except:
+                print("Warning: Could not set display backend")
     
-    # Load and display the image
-    try:
-        image = Image.open(image_path)
+        # Open and display the image
+        print("Loading image...")
+        img = Image.open(image_path)
+        print(f"Image loaded. Size: {img.size}, Mode: {img.mode}")
+        
+        # Display the image
         plt.figure(figsize=(10, 10))
-        plt.imshow(image)
+        plt.imshow(img)
         plt.axis('off')
-        plt.title(f"Image: {image_files[image_number]}")
+        plt.title(image_name)
+        print("Displaying image...")
         plt.show()
+        
     except Exception as e:
-        print(f"Error displaying image: {e}")
+        print(f"Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python display_image.py <image_number>")
-        print("Example: python display_image.py 0")
+        print("Usage: python display_image.py <image_name.jpg>")
+        print("Example: python display_image.py 000000581615.jpg")
         sys.exit(1)
     
-    try:
-        image_number = int(sys.argv[1])
-        display_image(image_number)
-    except ValueError:
-        print("Error: Image number must be an integer") 
+    display_image(sys.argv[1])

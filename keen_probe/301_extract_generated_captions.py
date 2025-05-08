@@ -5,8 +5,8 @@ from pathlib import Path
 
 def extract_captions():
     # File paths
-    h5_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generation_embeddings_V2.h5"
-    output_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generated_captions_V2.json"
+    h5_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generation_embeddings_V4.h5"
+    output_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generated_captions_V4.json"
     
     captions_data = {}
     

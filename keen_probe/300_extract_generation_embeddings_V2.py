@@ -15,6 +15,26 @@ from llava.conversation import conv_templates
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.mm_utils import tokenizer_image_token
 
+# Constants
+BATCH_SIZE = 4
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), "..", "coco_val2017")
+EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "generation_embeddings_V4.h5")
+
+def load_image_ids():
+    """Load image IDs from the pre_generation_embeddings_V4.json file."""
+    try:
+        pre_gen_path = os.path.join(os.path.dirname(__file__), "keen_data", "pre_generation_embeddings_V4.json")
+        if not os.path.exists(pre_gen_path):
+            print(f"Error: {pre_gen_path} not found")
+            return []
+            
+        with open(pre_gen_path, 'r') as f:
+            data = json.load(f)
+            return list(data.keys())
+    except Exception as e:
+        print(f"Error loading image IDs: {e}")
+        return []
+
 class Timer:
     def __init__(self):
         self.timings = defaultdict(list)
@@ -51,39 +71,42 @@ def monitor_gpu_memory():
         print(f"GPU Memory - Allocated: {allocated:.2f}GB, Reserved: {reserved:.2f}GB")
 
 def process_image_optimized(image, image_processor):
-    """Optimized image processing."""
-    timer.start('image_processing')
-    # Convert to tensor first
-    image_tensor = torch.from_numpy(np.array(image)).permute(2, 0, 1).float() / 255.0
-    # Process in FP16
-    result = image_processor(image_tensor.half())
-    # Ensure result is a tensor and add batch dimension
-    if not isinstance(result, torch.Tensor):
-        result = torch.tensor(result)
-    result = result.unsqueeze(0)
-    timer.stop('image_processing')
-    return result
+    """Process a single image using the image processor."""
+    try:
+        result = image_processor(image, return_tensors="pt")
+        # Convert BatchFeature to tensor by accessing the pixel_values
+        return result.pixel_values.squeeze(0)  # Remove batch dimension
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return None
 
 def load_images_batch(image_ids, image_dir, batch_size=4):
-    """Load and process multiple images in parallel."""
-    timer.start('batch_loading')
-    tensors = {}
-    for i in range(0, len(image_ids), batch_size):
-        batch_ids = image_ids[i:i + batch_size]
-        batch_tensors = []
-        for image_id in batch_ids:
-            img_path = os.path.join(image_dir, f"{image_id}.jpg")
-            image = Image.open(img_path).convert("RGB")
+    """Load and process a batch of images."""
+    tensors = []
+    for img_id in image_ids:
+        try:
+            image_path = os.path.join(image_dir, f"{img_id}.jpg")
+            if not os.path.exists(image_path):
+                print(f"Warning: Image {img_id} not found at {image_path}")
+                continue
+                
+            image = Image.open(image_path).convert('RGB')
             tensor = process_image_optimized(image, image_processor)
-            tensor = tensor.to(device).to(model.dtype)  # Removed unsqueeze since it's done in process_image_optimized
-            batch_tensors.append((image_id, tensor))
-        
-        # Process batch tensors
-        for image_id, tensor in batch_tensors:
-            tensors[image_id] = tensor
             
-    timer.stop('batch_loading')
-    return tensors
+            if tensor is not None:
+                tensor = tensor.unsqueeze(0).to(device).to(model.dtype)
+                tensors.append(tensor)
+            else:
+                print(f"Warning: Failed to process image {img_id}")
+                
+        except Exception as e:
+            print(f"Error loading image {img_id}: {e}")
+            continue
+            
+    if not tensors:
+        return None
+        
+    return torch.cat(tensors, dim=0)
 
 def get_token_texts(input_ids):
     """Get token texts from input IDs - optimized version."""
@@ -464,7 +487,7 @@ def process_single_image(image_id, model, image_processor, tokenizer, device, im
         image = Image.open(image_path).convert('RGB')
         
         # Process image
-        tensor = process_image(image, image_processor)
+        tensor = process_image_optimized(image, image_processor)
         tensor = tensor.unsqueeze(0).to(device).to(model.dtype)
         
         # Generate caption and get embeddings
@@ -483,166 +506,62 @@ def process_single_image(image_id, model, image_processor, tokenizer, device, im
         print(f"Traceback: {traceback.format_exc()}")
         return None
 
+def save_embeddings(embeddings):
+    """Save embeddings to HDF5 file."""
+    try:
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
+        
+        # Save embeddings
+        with h5py.File(EMBEDDINGS_PATH, 'w') as f:
+            for img_id, embedding in embeddings.items():
+                f.create_dataset(img_id, data=embedding, compression='gzip')
+    except Exception as e:
+        print(f"Error saving embeddings: {e}")
+
 def main():
-    # Start timing the entire script
-    script_start_time = time.time()
+    """Main function to process images and extract embeddings."""
+    # Load image IDs
+    image_ids = load_image_ids()
+    if not image_ids:
+        print("No image IDs found. Exiting.")
+        return
+
+    print(f"Found {len(image_ids)} image IDs")
     
-    print("Starting generation embeddings extraction...")
-    base_dir = os.path.dirname(__file__)
-    image_dir = os.path.abspath(os.path.join(base_dir, "..", "coco_val2017"))
-    output_dir = os.path.join(base_dir, "keen_data")
-    os.makedirs(output_dir, exist_ok=True)
+    # Create output directory if it doesn't exist
+    os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
     
-    # Cache model configuration
-    model_config = {
-        'mm_use_im_start_end': model.config.mm_use_im_start_end,
-        'dtype': model.dtype,
-        'device': device
-    }
-    
-    # Load pre_generation_embeddings.json to get list of processed images
-    timer.start('data_loading')
-    pre_gen_path = os.path.join(output_dir, "pre_generation_embeddings.json")
-    print(f"Loading processed images from {pre_gen_path}")
-    with open(pre_gen_path, 'r') as f:
-        pre_gen_data = json.load(f)
-    timer.stop('data_loading')
-    
-    # Create a set of processed image IDs
-    processed_image_ids = set(pre_gen_data.keys())
-    print(f"\nFound {len(processed_image_ids)} images to process:")
-    print("Image IDs:", sorted(list(processed_image_ids)))
-    print("\n" + "="*50 + "\n")
-    
-    # Create or load existing results
-    output_path = os.path.join(output_dir, "generation_embeddings_V3.h5")
-    processed_ids = set()
-    
-    # Add checkpoint file
-    checkpoint_path = os.path.join(output_dir, "generation_checkpoint_V3.json")
-    
-    # Load checkpoint if exists
-    timer.start('checkpoint_loading')
-    if os.path.exists(checkpoint_path):
-        with open(checkpoint_path, 'r') as f:
-            checkpoint = json.load(f)
-            processed_ids = set(checkpoint.get('processed_ids', []))
-            last_image_id = checkpoint.get('last_image_id')
-    else:
-        processed_ids = set()
-        last_image_id = None
-    timer.stop('checkpoint_loading')
-    
-    # For testing, just process a few images
-    # Comment this out for full processing
-    test_image_ids = list(processed_image_ids)[:5]
-    processed_image_ids = set(test_image_ids)
-    
-    # Remove previous file if it exists
-    if os.path.exists(output_path):
-        os.remove(output_path)
-        print(f"Removed existing file: {output_path}")
-    
-    # Open HDF5 file
-    with h5py.File(output_path, 'a') as f:
-        # Get list of already processed images
-        if 'processed_images' in f.attrs:
-            processed_ids = set(f.attrs['processed_images'])
-        
-        # Filter out already processed images
-        remaining_image_ids = processed_image_ids - processed_ids
-        print(f"Found {len(remaining_image_ids)} remaining images to process")
-        
-        print("Generating captions and extracting embeddings...")
-        try:
-            # Process images in batches
-            batch_size = 4  # Increased batch size for parallel processing
-            for i in range(0, len(remaining_image_ids), batch_size):
-                batch_start_time = time.time()
-                batch_ids = list(remaining_image_ids)[i:i + batch_size]
-                print(f"\nProcessing batch {i//batch_size + 1}/{(len(remaining_image_ids) + batch_size - 1)//batch_size}")
+    # Process images and generate captions with embeddings
+    with h5py.File(EMBEDDINGS_PATH, 'w') as f:
+        for i, image_id in enumerate(image_ids):
+            print(f"\nProcessing image {i+1}/{len(image_ids)}: {image_id}")
+            
+            try:
+                # Process single image
+                result = process_single_image(image_id, model, image_processor, tokenizer, device, IMAGE_DIR)
                 
-                # Load batch of images
-                tensors = load_images_batch(batch_ids, image_dir, batch_size)
+                if result:
+                    # Write embeddings to HDF5 file
+                    write_embeddings_hdf5(f, image_id, result)
+                    print(f"Successfully processed and saved embeddings for image {image_id}")
+                else:
+                    print(f"Failed to process image {image_id}")
                 
-                # Process each image in the batch
-                for image_id, tensor in tensors.items():
-                    try:
-                        image_start_time = time.time()
-                        print(f"\n{'='*50}")
-                        print(f"Processing image: {image_id}")
-                        print(f"{'='*50}\n")
-                        
-                        timer.start('total_processing')
-                        
-                        # Process image
-                        generation_result = process_with_retry(os.path.join(image_dir, f"{image_id}.jpg"), tensor)
-                        if generation_result is None:
-                            print(f"Skipping {image_id} due to processing error")
-                            continue
-                        
-                        # Write to HDF5
-                        write_embeddings_hdf5(f, image_id, generation_result, i == 0 and not processed_ids)
-                        
-                        # Update processed images list
-                        processed_ids.add(image_id)
-                        f.attrs['processed_images'] = list(processed_ids)
-                        
-                        timer.stop('total_processing')
-                        
-                        # Print detailed timing for this image
-                        image_time = time.time() - image_start_time
-                        print(f"\nTiming for image {image_id}:")
-                        print(f"Total image processing time: {image_time:.3f}s")
-                        print(f"Model forward time: {timer.get_average('model_forward'):.3f}s")
-                        print(f"Token update time: {timer.get_average('token_update'):.3f}s")
-                        print(f"Step embedding extraction: {timer.get_average('step_embedding_extraction'):.3f}s")
-                        print(f"Sequence embedding extraction: {timer.get_average('sequence_embedding_extraction'):.3f}s")
-                        print(f"HDF5 writing time: {timer.get_average('hdf5_writing'):.3f}s")
-                        monitor_gpu_memory()
-                        
-                    except Exception as e:
-                        print(f"Error processing {image_id}: {str(e)}")
-                        print(f"Error type: {type(e).__name__}")
-                        import traceback
-                        print(f"Traceback: {traceback.format_exc()}")
-                        continue
+                # Monitor GPU memory
+                monitor_gpu_memory()
                 
-                # Print batch timing
-                batch_time = time.time() - batch_start_time
-                print(f"\nBatch timing:")
-                print(f"Total batch time: {batch_time:.3f}s")
-                print(f"Average time per image: {batch_time/len(batch_ids):.3f}s")
-                
-                # Clear GPU memory after each batch
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                
-        finally:
-            # Clear GPU memory
+            except Exception as e:
+                print(f"Error processing image {image_id}: {str(e)}")
+                traceback.print_exc()
+                continue
+            
+            # Clear GPU memory after each image
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            
-            # Clean up checkpoint
-            if os.path.exists(checkpoint_path):
-                os.remove(checkpoint_path)
-            
-            # Print final timing statistics
-            print("\nFinal Timing Statistics:")
-            print("-" * 50)
-            timer.print_stats()
-    
-    # Calculate and print total script execution time
-    script_end_time = time.time()
-    total_time = script_end_time - script_start_time
-    hours = int(total_time // 3600)
-    minutes = int((total_time % 3600) // 60)
-    seconds = total_time % 60
-    
-    print("\n" + "="*50)
-    print(f"Total script execution time: {hours:02d}:{minutes:02d}:{seconds:05.2f}")
-    print(f"Results saved to {output_path}")
-    print("="*50 + "\n")
+
+    print("\nProcessing complete!")
+    timer.print_stats()
 
 if __name__ == "__main__":
     main() 

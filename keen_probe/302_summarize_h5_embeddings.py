@@ -71,8 +71,8 @@ def read_hdf5_structure(group, indent=0):
 
 def main():
     # File paths
-    h5_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generation_embeddings_V2.h5"
-    output_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/h5_embeddings_readable_V2.json"
+    h5_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/generation_embeddings_V4.h5"
+    output_path = "/home/luk_lab/Desktop/Luk Lab - AI/projects/thesis/Thesis_LLAVA/keen_probe/keen_data/h5_embeddings_readable_V4.json"
     
     print(f"Reading HDF5 file from: {h5_path}")
     

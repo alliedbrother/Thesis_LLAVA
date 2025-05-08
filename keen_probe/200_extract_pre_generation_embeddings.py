@@ -138,11 +138,11 @@ def main():
     
     print("\nSaving final results...")
     # Save results to pre_generation_embeddings.json
-    with open(os.path.join(output_dir, "pre_generation_embeddings.json"), 'w') as f:
+    with open(os.path.join(output_dir, "pre_generation_embeddings_V41.json"), 'w') as f:
         json.dump(results, f, indent=2)
     
     print(f"\n✅ Completed processing {len(results)} images")
-    print(f"✅ Results saved to {os.path.join(output_dir, 'pre_generation_embeddings.json')}")
+    print(f"✅ Results saved to {os.path.join(output_dir, 'pre_generation_embeddings_V41.json')}")
     print("Script execution completed. Exiting...")
     
     # Explicitly clean up CUDA memory if using GPU

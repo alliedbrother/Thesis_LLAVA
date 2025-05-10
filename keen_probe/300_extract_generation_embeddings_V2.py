@@ -18,7 +18,7 @@ from llava.mm_utils import tokenizer_image_token
 # Constants
 BATCH_SIZE = 4
 IMAGE_DIR = os.path.join(os.path.dirname(__file__), "..", "coco_val2017")
-EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "generation_embeddings_V4.h5")
+EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "generation_embeddings_V42.h5")
 
 def load_image_ids():
     """Load image IDs from the pre_generation_embeddings_V4.json file."""

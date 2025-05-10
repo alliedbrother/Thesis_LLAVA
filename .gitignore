@@ -186,3 +186,6 @@ keen_probe/keen_data/pre_generation_embeddings.json
 keen_probe/keen_data/generation_embeddings_V4.h5
 keen_probe/keen_data/pre_generation_embeddings_V41.json
 keen_probe/keen_data/pre_generation_embeddings_V4.json
+
+# COCO dataset files
+annotations/captions_train2017.json

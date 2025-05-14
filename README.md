@@ -1,97 +1,148 @@
 # LLaVA Keen Probe Project
 
-This project implements a probing mechanism to analyze the factual correctness of LLaVA model's image captions using various model embeddings.
+# Project: Visual Knowledge Estimation with LLaVA
 
-## Project Structure
+## Project Overview
 
-### Main Scripts
+This project aims to estimate the visual knowledge of the LLaVA model using KEEN methodology. The objective is to evaluate the ability of the model to generate accurate image captions without relying on question-answering tasks. We focus on extracting image and image+text embeddings from various layers of the LLaVA model and use these embeddings to train a probe for evaluating factual accuracy.
 
-- `01_download_model.py`: Downloads the LLaVA model and necessary components
-- `02_extract_features.py`: Extracts embeddings from different layers of the LLaVA model
-- `03_generate_captions.py`: Generates captions for images using the LLaVA model and create factual scores.
-- `04_build_dataset.py`: Creates training datasets from extracted embeddings and factual scores
-- `05_train_probe.py`: Trains the probing model on the generated datasets
-- `06_eval_probe.py`: Evaluates the trained probe on test data
+## Directory Structure
 
-### Utility Scripts
+```
+project_root/
+├── keen_data/                     # Contains generated datasets and model outputs
+├── coco_val2017/                  # COCO validation images
+├── annotations/                   # COCO annotations
+├── models/                        # Trained probe models
+├── utils.py                       # Utility functions and model initialization
+├── download_coco_val2017.py        # Script to download COCO dataset
+├── download_captions.py            # Script to download annotations
+├── 100_download_model.py           # Script to download the model
+├── 200_extract_pre_generation_embeddings.py # Extract pre-generation embeddings
+├── 300_extract_generation_embeddings_V3.py  # Extract generation embeddings
+├── 301_extract_generated_captions_V3.py      # Extract generated captions
+├── 302_extract_image_details_V3.py            # Extract detailed image embeddings
+├── 400_factual_score.py            # Script to compute factual accuracy
+├── 500_build_dataset.py            # Build dataset from extracted features
+├── 600_train_probe.py              # Train the KEEN probe
+├── 700_eval_probe.py               # Evaluate the trained probe
+└── map_captions_to_csv.py          # Map image captions to CSV for easy access
+```
 
-- `utils.py`: Contains helper functions used across the project
-- `create_prompts.py`: Generates prompts for the LLaVA model
-- `download_captions.py`: Downloads ground truth captions
-- `download_coco_val2017.py`: Downloads COCO validation dataset
-- `map_captions_to_csv.py`: Maps captions to CSV format
-- `display_image.py`: Utility for displaying images
-- `test_display.py`: Tests image display functionality
-- `create_datasets.py`: Alternative implementation for dataset creation
+## Installation Instructions
 
-### Configuration Files
+1. Clone the repository:
 
-- `prompts.json`: Contains prompts used for generating captions
-- `requirements.txt`: Lists all project dependencies with versions
+```
+git clone <repo_url>
+```
 
-### Data Directory (`keen_data/`)
+2. Install the required packages:
 
-- `features.json`: Contains extracted embeddings from different model layers
-- `factual_scores.json`: Contains factual correctness scores for generated captions
-- `coco_val2017_captions.csv`: Ground truth captions from COCO dataset
-- `probe.pt`: Trained probing model weights
+```
+pip install -r requirements.txt
+```
 
-#### Subdirectories
+3. Download the model:
 
-- `generated_datasets/`: Contains CSV files of training datasets
-  - `dataset_vision_tower_embeddings.csv`
-  - `dataset_mm_projector_embeddings.csv`
-  - `dataset_language_model_embeddings.csv`
-  - `dataset_vision_tower_embeddings_after_projection.csv`
-  - `dataset_language_model_embeddings_before_projection.csv`
+```
+python 100_download_model.py
+```
 
-- `models/`: Stores downloaded model files
-- `embeddings/`: Contains extracted embeddings
+## Data Preparation
 
-## Dependencies
+1. Download the COCO validation images:
 
-The project requires the following packages (see `requirements.txt` for specific versions):
-- torch
-- transformers
-- tokenizers
-- pandas
-- numpy
-- tqdm
-- pillow
-- sentence-transformers
-- accelerate
-- bitsandbytes
-- huggingface-hub
+```
+python download_coco_val2017.py
+```
 
-## Usage
+2. Download the captions:
 
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```
+python download_captions.py
+```
 
-2. Run the scripts in sequence:
-   ```bash
-   python 01_download_model.py
-   python 02_extract_features.py
-   python 03_generate_captions.py
-   python 04_build_dataset.py
-   python 05_train_probe.py
-   python 06_eval_probe.py
-   ```
+3. Map captions to CSV:
 
-## Dataset Structure
+```
+python map_captions_to_csv.py
+```
 
-Each generated dataset contains:
-- Embedding features from a specific model layer
-- Factual correctness labels (0 or 1)
+## Model Download and Setup
 
-The datasets are created from different embedding layers:
-1. Vision tower embeddings
-2. MM projector embeddings
-3. Language model embeddings
-4. Vision tower embeddings after projection
-5. Language model embeddings before projection
+The model used is LLaVA v1.5-7b. It is downloaded using the script:
 
+```
+python 100_download_model.py
+```
 
-Verify
+## Feature Extraction
+
+### Pre-generation Embeddings
+
+Extracted using:
+
+```
+python 200_extract_pre_generation_embeddings.py
+```
+
+### Generation Embeddings
+
+Extracted using:
+
+```
+python 300_extract_generation_embeddings_V3.py
+```
+
+## Caption Generation
+
+Generate captions using the extracted embeddings:
+
+```
+python 301_extract_generated_captions_V3.py
+```
+
+## Evaluation
+
+Evaluate the factual accuracy of generated captions:
+
+```
+python 400_factual_score.py
+```
+
+## Training the Probe
+
+Train the KEEN probe to classify factual correctness:
+
+```
+python 600_train_probe.py
+```
+
+## Running Evaluation
+
+Evaluate the probe:
+
+```
+python 700_eval_probe.py
+```
+
+## Utilities
+
+* `utils.py`: Provides utility functions such as model loading and image processing.
+* `map_captions_to_csv.py`: Maps image IDs to captions in a CSV format.
+
+## How to Run the Full Pipeline
+
+1. Prepare data and download model.
+2. Extract pre-generation and generation embeddings.
+3. Generate captions.
+4. Train the probe.
+5. Evaluate the probe.
+
+## Acknowledgements
+
+* LLaVA for the vision-language model.
+* COCO dataset for image captioning.
+* KEEN methodology for knowledge estimation.
+

@@ -22,24 +22,20 @@ from functools import partial
 # Constants
 BATCH_SIZE = 1  # Reduced from 4 to 1
 NUM_WORKERS = 0  # Disabled multiprocessing
-IMAGE_DIR = os.path.join(os.path.dirname(__file__), "..", "coco_val2014")
-EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "2014_extracted_embeddings", "generation_embeddings_V41.h5")
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), "..", "coco_val2017")
+EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "generation_embeddings_V41.h5")
 
 def load_image_ids():
-    """Load all image IDs from the coco_val2014 directory."""
+    """Load image IDs from the pre_generation_embeddings_V6.json file."""
     try:
-        if not os.path.exists(IMAGE_DIR):
-            print(f"Error: Image directory {IMAGE_DIR} not found")
+        pre_gen_path = os.path.join(os.path.dirname(__file__), "keen_data", "pre_generation_embeddings_V41.json")
+        if not os.path.exists(pre_gen_path):
+            print(f"Error: {pre_gen_path} not found")
             return []
             
-        # Get all jpg files in the directory
-        image_files = [f for f in os.listdir(IMAGE_DIR) if f.endswith('.jpg')]
-        
-        # Extract image IDs from filenames (remove .jpg extension)
-        image_ids = sorted([os.path.splitext(f)[0] for f in image_files])
-        
-        print(f"Found {len(image_ids)} images in {IMAGE_DIR}")
-        return image_ids
+        with open(pre_gen_path, 'r') as f:
+            data = json.load(f)
+            return list(data.keys())
     except Exception as e:
         print(f"Error loading image IDs: {e}")
         return []
@@ -396,7 +392,7 @@ def generate_caption_with_embeddings(img_path, tensor):
                     new_token_text = tokenizer._convert_id_to_token(next_token.item())
                     if new_token_text is None:
                         new_token_text = f"<id_{next_token.item()}>"
-                    # print(f"Step {step} token text:", new_token_text)
+                    print(f"Step {step} token text:", new_token_text)
                     if not new_token_text.startswith("<") and not new_token_text.startswith("▁"):
                         generated_text += new_token_text
                     elif new_token_text.startswith("▁"):
@@ -422,8 +418,8 @@ def generate_caption_with_embeddings(img_path, tensor):
                         post_generation[f'step_{step + 1}'] = step_embeddings
                 
                 # Print sequence length at each step
-                # print(f"Sequence length at step {step}: {len(token_texts)}")
-                # print(f"Generated tokens so far: {token_texts[initial_sequence_length:]}")
+                print(f"Sequence length at step {step}: {len(token_texts)}")
+                print(f"Generated tokens so far: {token_texts[initial_sequence_length:]}")
                 
                 # Clear GPU memory to avoid accumulation
                 del outputs
@@ -436,9 +432,9 @@ def generate_caption_with_embeddings(img_path, tensor):
             
             # Use our manually constructed caption instead of decoding
             caption = generated_text.strip()
-            # print(f"Generated caption: {caption}")
-            # print(f"Final sequence length: {len(token_texts)}")
-            # print(f"Generated tokens: {token_texts[initial_sequence_length:]}")
+            print(f"Generated caption: {caption}")
+            print(f"Final sequence length: {len(token_texts)}")
+            print(f"Generated tokens: {token_texts[initial_sequence_length:]}")
             
         # Clear GPU memory before returning
         if torch.cuda.is_available():
@@ -573,81 +569,58 @@ def main():
     try:
         # Load image IDs
         image_ids = load_image_ids()
+        image_ids = image_ids[:10]
         if not image_ids:
             print("No image IDs found. Exiting.")
             return
 
         print(f"Found {len(image_ids)} image IDs")
         
-        # Process images in batches of 3000
-        BATCH_SIZE_IMAGES = 3000
-        total_parts = (len(image_ids) + BATCH_SIZE_IMAGES - 1) // BATCH_SIZE_IMAGES
+        # Create output directory if it doesn't exist
+        os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
         
-        for part in range(total_parts):
-            start_idx = part * BATCH_SIZE_IMAGES
-            end_idx = min((part + 1) * BATCH_SIZE_IMAGES, len(image_ids))
-            current_batch = image_ids[start_idx:end_idx]
-            
-            # Create output directory if it doesn't exist
-            output_dir = os.path.dirname(EMBEDDINGS_PATH)
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Create part-specific output path
-            base_path = os.path.splitext(EMBEDDINGS_PATH)[0]
-            current_output_path = f"{base_path}_part{part+1}.h5"
-            
-            print(f"\nProcessing part {part+1}/{total_parts}")
-            print(f"Processing images {start_idx+1} to {end_idx}")
-            print(f"Output file: {current_output_path}")
-            
-            # Create dataset and dataloader for current batch
-            dataset = ImageDataset(current_batch, IMAGE_DIR, image_processor)
-            dataloader = DataLoader(
-                dataset,
-                batch_size=BATCH_SIZE,
-                num_workers=NUM_WORKERS,
-                shuffle=False,
-                collate_fn=collate_fn
-            )
-            
-            # Process images in batches
-            with h5py.File(current_output_path, 'w') as f:
-                for batch_idx, batch_data in enumerate(tqdm(dataloader, desc=f"Processing part {part+1}")):
-                    print(f"\nProcessing batch {batch_idx + 1}")
+        # Create dataset and dataloader
+        dataset = ImageDataset(image_ids, IMAGE_DIR, image_processor)
+        dataloader = DataLoader(
+            dataset,
+            batch_size=BATCH_SIZE,
+            num_workers=NUM_WORKERS,
+            shuffle=False,
+            collate_fn=collate_fn
+        )
+        
+        # Process images in batches
+        with h5py.File(EMBEDDINGS_PATH, 'w') as f:
+            for batch_idx, batch_data in enumerate(tqdm(dataloader, desc="Processing batches")):
+                print(f"\nProcessing batch {batch_idx + 1}")
+                
+                try:
+                    # Process batch
+                    batch_results = process_batch(batch_data, model, tokenizer, device)
                     
-                    try:
-                        # Process batch
-                        batch_results = process_batch(batch_data, model, tokenizer, device)
+                    # Save results
+                    for image_id, result in batch_results:
+                        try:
+                            write_embeddings_hdf5(f, image_id, result)
+                            print(f"Successfully processed and saved embeddings for image {image_id}")
+                        except Exception as e:
+                            print(f"Error saving embeddings for image {image_id}: {e}")
+                            print("Error details:", traceback.format_exc())
+                    
+                    # Monitor GPU memory
+                    monitor_gpu_memory()
+                    
+                    # Clear GPU memory after each batch
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                         
-                        # Save results
-                        for image_id, result in batch_results:
-                            try:
-                                write_embeddings_hdf5(f, image_id, result)
-                                print(f"Successfully processed and saved embeddings for image {image_id}")
-                            except Exception as e:
-                                print(f"Error saving embeddings for image {image_id}: {e}")
-                                print("Error details:", traceback.format_exc())
-                        
-                        # Monitor GPU memory
-                        monitor_gpu_memory()
-                        
-                        # Clear GPU memory after each batch
-                        if torch.cuda.is_available():
-                            torch.cuda.empty_cache()
-                            
-                    except Exception as e:
-                        print(f"Error processing batch {batch_idx + 1}: {e}")
-                        print("Error details:", traceback.format_exc())
-                        continue
-            
-            print(f"\nCompleted part {part+1}/{total_parts}")
-            timer.print_stats()
-            
-            # Clear GPU memory after each part
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+                except Exception as e:
+                    print(f"Error processing batch {batch_idx + 1}: {e}")
+                    print("Error details:", traceback.format_exc())
+                    continue
 
-        print("\nAll parts processing complete!")
+        print("\nProcessing complete!")
+        timer.print_stats()
         
     except Exception as e:
         print(f"Error in main function: {e}")

@@ -189,3 +189,8 @@ keen_probe/keen_data/pre_generation_embeddings_V4.json
 
 # COCO dataset files
 annotations/captions_train2017.json
+
+
+keen_probe/keen_data/
+coco_val2014/
+coco_val2017/

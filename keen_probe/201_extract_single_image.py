@@ -6,7 +6,7 @@ def extract_image_data(image_id):
     """Extract data for a specific image ID and save to JSON file."""
     # Get the directory of the current script
     base_dir = os.path.dirname(__file__)
-    input_path = os.path.join(base_dir, "keen_data", "pre_generation_embeddings_V4.json")
+    input_path = os.path.join(base_dir, "keen_data", "pre_generation_embeddings_V41.json")
     output_path = os.path.join(base_dir, "keen_data", f"{image_id}.json")
 
     # Load embeddings

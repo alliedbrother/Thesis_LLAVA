@@ -198,3 +198,5 @@ coco_val2017/
 
 # Paligemma dataset files
 paligemma_data/
+Miniconda3-latest-Linux-x86_64.sh
+keen_probe/keen_data/initial_verifications/pre_generation_embeddings_V41.json

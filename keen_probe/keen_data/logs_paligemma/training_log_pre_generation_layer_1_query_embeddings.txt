@@ -1,0 +1,74 @@
+2025-05-20 10:00:14,872 - INFO - Starting probe training with hyperparameter tuning...
+2025-05-20 10:00:14,872 - INFO - Log file: /root/project/Thesis_LLAVA/keen_probe/keen_data/logs_paligemma/training_log_pre_generation_layer_1_query_embeddings.txt
+2025-05-20 10:00:14,872 - INFO - 
+Device Information:
+2025-05-20 10:00:14,872 - INFO - ==================================================
+2025-05-20 10:00:14,872 - INFO - CUDA available: True
+2025-05-20 10:00:14,892 - INFO - Number of CUDA devices: 1
+2025-05-20 10:00:14,894 - INFO - Current CUDA device index: 0
+2025-05-20 10:00:14,894 - INFO - CUDA device name: NVIDIA GeForce RTX 4090
+2025-05-20 10:00:14,894 - INFO - CUDA version: 12.1
+2025-05-20 10:00:14,894 - INFO - PyTorch version: 2.1.2+cu121
+2025-05-20 10:00:14,996 - INFO - CUDA test tensor created successfully
+2025-05-20 10:00:14,997 - INFO - Final device being used: cuda
+2025-05-20 10:00:14,997 - INFO - ==================================================
+2025-05-20 10:00:15,009 - INFO - 
+Loading embeddings from: /root/project/Thesis_LLAVA/keen_probe/keen_data/paligemma_extracted_embeddings
+2025-05-20 10:00:15,009 - INFO - Looking for path: pre_generation/layer_1/query_embeddings
+2025-05-20 10:00:15,009 - INFO - Number of images in split: 713
+2025-05-20 10:00:15,013 - INFO - File: generation_embeddings.h5
+2025-05-20 10:00:15,013 - INFO -   Total images: 3125
+2025-05-20 10:00:15,013 - INFO -   Matched images: 713
+2025-05-20 10:00:15,014 - INFO - 
+Processing complete:
+2025-05-20 10:00:15,014 - INFO - Total files processed: 1
+2025-05-20 10:00:15,014 - INFO - Total images found: 3125
+2025-05-20 10:00:15,014 - INFO - Total images matched: 713
+2025-05-20 10:00:15,014 - INFO - 
+Starting hyperparameter search...
+2025-05-20 10:00:15,014 - INFO - Total combinations to try: 6
+2025-05-20 10:00:15,014 - INFO - ================================================
+2025-05-20 10:00:15,014 - INFO - 
+Trying combination 1/6
+2025-05-20 10:00:15,014 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 10:00:16,079 - INFO - 
+New best model found!
+2025-05-20 10:00:16,079 - INFO - Validation MSE: 0.102373
+2025-05-20 10:00:16,079 - INFO - Saved to: /root/project/Thesis_LLAVA/keen_probe/keen_data/models_regression_paligemma/best_model_pre_generation_layer_1_query_embeddings.pt
+2025-05-20 10:00:16,079 - INFO - ================================================
+2025-05-20 10:00:16,079 - INFO - 
+Trying combination 2/6
+2025-05-20 10:00:16,079 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 10:00:16,513 - INFO - ================================================
+2025-05-20 10:00:16,514 - INFO - 
+Trying combination 3/6
+2025-05-20 10:00:16,514 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 10:00:16,962 - INFO - 
+New best model found!
+2025-05-20 10:00:16,962 - INFO - Validation MSE: 0.101896
+2025-05-20 10:00:16,963 - INFO - Saved to: /root/project/Thesis_LLAVA/keen_probe/keen_data/models_regression_paligemma/best_model_pre_generation_layer_1_query_embeddings.pt
+2025-05-20 10:00:16,963 - INFO - ================================================
+2025-05-20 10:00:16,963 - INFO - 
+Trying combination 4/6
+2025-05-20 10:00:16,963 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 10:00:17,327 - INFO - ================================================
+2025-05-20 10:00:17,327 - INFO - 
+Trying combination 5/6
+2025-05-20 10:00:17,327 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 10:00:17,700 - INFO - ================================================
+2025-05-20 10:00:17,700 - INFO - 
+Trying combination 6/6
+2025-05-20 10:00:17,700 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 10:00:18,106 - INFO - 
+Training complete!
+2025-05-20 10:00:18,106 - INFO - 
+Best Model Summary:
+2025-05-20 10:00:18,107 - INFO - ==================================================
+2025-05-20 10:00:18,107 - INFO - Model saved at: /root/project/Thesis_LLAVA/keen_probe/keen_data/models_regression_paligemma/best_model_pre_generation_layer_1_query_embeddings.pt
+2025-05-20 10:00:18,107 - INFO - Validation Loss: 0.101896
+2025-05-20 10:00:18,107 - INFO - 
+Best Hyperparameters:
+2025-05-20 10:00:18,107 - INFO - - layer_sizes: [1024, 516, 256]
+2025-05-20 10:00:18,107 - INFO - - learning_rates: 0.05
+2025-05-20 10:00:18,107 - INFO - - batch_sizes: 1000
+2025-05-20 10:00:18,107 - INFO - - dropout_rates: 0.1

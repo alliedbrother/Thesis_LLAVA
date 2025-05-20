@@ -1,0 +1,46 @@
+2025-05-19 15:41:44,854 - INFO - Starting probe training with hyperparameter tuning...
+2025-05-19 15:41:44,854 - INFO - Log file: /root/project/Thesis_LLAVA/keen_probe/keen_data/logs/training_log_post_generation_step_1_layer_0_image_embeddings.txt
+2025-05-19 15:41:44,854 - INFO - 
+Device Information:
+2025-05-19 15:41:44,854 - INFO - ==================================================
+2025-05-19 15:41:44,854 - INFO - CUDA available: False
+2025-05-19 15:41:44,854 - WARNING - CUDA is not available. Using CPU instead.
+2025-05-19 15:41:44,854 - INFO - Final device being used: cpu
+2025-05-19 15:41:44,854 - INFO - ==================================================
+2025-05-19 15:41:44,940 - INFO - 
+Loading embeddings from: /root/project/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings
+2025-05-19 15:41:44,940 - INFO - Looking for path: post_generation/step_1/layer_0/image_embeddings
+2025-05-19 15:41:44,940 - INFO - Number of images in split: 6
+2025-05-19 15:41:44,946 - INFO - File: generation_embeddings_V41_part5.h5
+2025-05-19 15:41:44,947 - INFO -   Total images: 3000
+2025-05-19 15:41:44,947 - INFO -   Matched images: 0
+2025-05-19 15:41:44,952 - INFO - File: generation_embeddings_V41_part3.h5
+2025-05-19 15:41:44,952 - INFO -   Total images: 3000
+2025-05-19 15:41:44,952 - INFO -   Matched images: 0
+2025-05-19 15:41:44,957 - INFO - File: generation_embeddings_V41_part8.h5
+2025-05-19 15:41:44,957 - INFO -   Total images: 3000
+2025-05-19 15:41:44,957 - INFO -   Matched images: 0
+2025-05-19 15:41:44,962 - INFO - File: generation_embeddings_V41_part11.h5
+2025-05-19 15:41:44,962 - INFO -   Total images: 3000
+2025-05-19 15:41:44,962 - INFO -   Matched images: 0
+2025-05-19 15:41:44,967 - INFO - File: generation_embeddings_V41_part6.h5
+2025-05-19 15:41:44,967 - INFO -   Total images: 3000
+2025-05-19 15:41:44,967 - INFO -   Matched images: 0
+2025-05-19 15:41:44,972 - INFO - File: generation_embeddings_V41_part9.h5
+2025-05-19 15:41:44,972 - INFO -   Total images: 3000
+2025-05-19 15:41:44,972 - INFO -   Matched images: 0
+2025-05-19 15:41:44,977 - INFO - File: generation_embeddings_V41_part1_beforenohup.h5
+2025-05-19 15:41:44,977 - INFO -   Total images: 3000
+2025-05-19 15:41:44,977 - INFO -   Matched images: 0
+2025-05-19 15:41:44,983 - INFO - File: generation_embeddings_V41_part1.h5
+2025-05-19 15:41:44,983 - INFO -   Total images: 3000
+2025-05-19 15:41:44,983 - INFO -   Matched images: 0
+2025-05-19 15:41:44,988 - INFO - File: generation_embeddings_V41_part2.h5
+2025-05-19 15:41:44,988 - INFO -   Total images: 3000
+2025-05-19 15:41:44,988 - INFO -   Matched images: 1
+2025-05-19 15:41:44,993 - INFO - File: generation_embeddings_V41_part10.h5
+2025-05-19 15:41:44,993 - INFO -   Total images: 3000
+2025-05-19 15:41:44,993 - INFO -   Matched images: 1
+2025-05-19 15:41:44,998 - INFO - File: generation_embeddings_V41_part4.h5
+2025-05-19 15:41:44,998 - INFO -   Total images: 3000
+2025-05-19 15:41:44,998 - INFO -   Matched images: 0

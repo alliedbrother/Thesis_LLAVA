@@ -1,0 +1,71 @@
+2025-05-19 15:00:19,982 - INFO - Starting probe training with hyperparameter tuning...
+2025-05-19 15:00:19,982 - INFO - Log file: /root/project/Thesis_LLAVA/keen_probe/keen_data/logs/training_log_20250519_150019.txt
+2025-05-19 15:00:19,982 - INFO - 
+Device Information:
+2025-05-19 15:00:19,982 - INFO - ==================================================
+2025-05-19 15:00:19,982 - INFO - CUDA available: False
+2025-05-19 15:00:19,982 - WARNING - CUDA is not available. Using CPU instead.
+2025-05-19 15:00:19,983 - INFO - Final device being used: cpu
+2025-05-19 15:00:19,983 - INFO - ==================================================
+2025-05-19 15:00:20,052 - INFO - 
+Loading embeddings from: /root/project/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings_old
+2025-05-19 15:00:20,052 - INFO - Looking for path: post_generation/step_1/layer_0/image_embeddings
+2025-05-19 15:00:20,052 - INFO - Number of images in split: 6
+2025-05-19 15:00:20,053 - INFO - File: generation_embeddings_V41_part1.h5
+2025-05-19 15:00:20,053 - INFO -   Total images: 5
+2025-05-19 15:00:20,053 - INFO -   Matched images: 2
+2025-05-19 15:00:20,053 - INFO - File: generation_embeddings_V41_part2.h5
+2025-05-19 15:00:20,053 - INFO -   Total images: 5
+2025-05-19 15:00:20,053 - INFO -   Matched images: 4
+2025-05-19 15:00:20,054 - INFO - 
+Processing complete:
+2025-05-19 15:00:20,054 - INFO - Total files processed: 2
+2025-05-19 15:00:20,054 - INFO - Total images found: 10
+2025-05-19 15:00:20,054 - INFO - Total images matched: 6
+2025-05-19 15:00:20,054 - INFO - 
+Starting hyperparameter search...
+2025-05-19 15:00:20,054 - INFO - Total combinations to try: 54
+2025-05-19 15:00:20,054 - INFO - ================================================
+2025-05-19 15:00:20,054 - INFO - 
+Trying combination 1/54
+2025-05-19 15:00:20,054 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 4, 'dropout_rates': 0.1}
+2025-05-19 15:00:26,637 - INFO - 
+New best model found!
+2025-05-19 15:00:26,637 - INFO - Validation MSE: 0.062823
+2025-05-19 15:00:26,637 - INFO - Saved to: /root/project/Thesis_LLAVA/keen_probe/keen_data/models/best_model_post_generation_step_1_layer_0_image_embeddings.pt
+2025-05-19 15:00:26,637 - INFO - ================================================
+2025-05-19 15:00:26,637 - INFO - 
+Trying combination 2/54
+2025-05-19 15:00:26,637 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 4, 'dropout_rates': 0.2}
+2025-05-19 15:00:35,756 - INFO - ================================================
+2025-05-19 15:00:35,756 - INFO - 
+Trying combination 3/54
+2025-05-19 15:00:35,757 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 4, 'dropout_rates': 0.3}
+2025-05-19 15:00:39,514 - INFO - 
+New best model found!
+2025-05-19 15:00:39,515 - INFO - Validation MSE: 0.037468
+2025-05-19 15:00:39,515 - INFO - Saved to: /root/project/Thesis_LLAVA/keen_probe/keen_data/models/best_model_post_generation_step_1_layer_0_image_embeddings.pt
+2025-05-19 15:00:39,515 - INFO - ================================================
+2025-05-19 15:00:39,516 - INFO - 
+Trying combination 4/54
+2025-05-19 15:00:39,516 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 6, 'dropout_rates': 0.1}
+2025-05-19 15:00:43,073 - INFO - ================================================
+2025-05-19 15:00:43,073 - INFO - 
+Trying combination 5/54
+2025-05-19 15:00:43,073 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 6, 'dropout_rates': 0.2}
+2025-05-19 15:00:45,028 - INFO - ================================================
+2025-05-19 15:00:45,028 - INFO - 
+Trying combination 6/54
+2025-05-19 15:00:45,028 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.001, 'batch_sizes': 6, 'dropout_rates': 0.3}
+2025-05-19 15:00:46,964 - INFO - ================================================
+2025-05-19 15:00:46,964 - INFO - 
+Trying combination 7/54
+2025-05-19 15:00:46,965 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.0005, 'batch_sizes': 4, 'dropout_rates': 0.1}
+2025-05-19 15:00:50,680 - INFO - ================================================
+2025-05-19 15:00:50,680 - INFO - 
+Trying combination 8/54
+2025-05-19 15:00:50,680 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.0005, 'batch_sizes': 4, 'dropout_rates': 0.2}
+2025-05-19 15:00:59,161 - INFO - ================================================
+2025-05-19 15:00:59,161 - INFO - 
+Trying combination 9/54
+2025-05-19 15:00:59,161 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.0005, 'batch_sizes': 4, 'dropout_rates': 0.3}

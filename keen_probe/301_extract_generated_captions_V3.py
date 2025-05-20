@@ -4,8 +4,8 @@ import json
 from tqdm import tqdm
 
 # Constants
-EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "2014_extracted_embeddings", "generation_embeddings_V41_part1.h5")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "2014_extracted_captions", "generated_captions_V41_part1.json")
+EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "paligemma_extracted_embeddings", "generation_embeddings.h5")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "paligemma_extracted_captions", "generation_embeddings_paligemma.json")
 
 def extract_captions():
     """Extract captions and associated metadata from the HDF5 embeddings file."""

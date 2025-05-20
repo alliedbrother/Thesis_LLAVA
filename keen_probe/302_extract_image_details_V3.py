@@ -70,8 +70,8 @@ def extract_embeddings(h5_path, image_id, output_path):
 
 def main():
     # Define paths
-    h5_path = "/root/project/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings/generation_embeddings_V41_part1.h5"
-    output_path = "/root/project/Thesis_LLAVA/keen_probe/keen_data/extracted_image_details/"
+    h5_path = "/root/project/Thesis_LLAVA/keen_probe/keen_data/paligemma_extracted_embeddings/generation_embeddings.h5"
+    output_path = "/root/project/Thesis_LLAVA/keen_probe/keen_data/extracted_image_details_paligemma/"
     
     # Create output directory if it doesn't exist
     os.makedirs(output_path, exist_ok=True)

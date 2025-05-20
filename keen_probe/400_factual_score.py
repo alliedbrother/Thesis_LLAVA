@@ -1,113 +1,81 @@
-import sys, os
-import traceback
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import json
-import torch
+import os
+import sys
 import pandas as pd
-from tqdm import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
-from transformers import BertTokenizer, BertModel
+sys.path.append('coco-caption')
 
-print("Starting caption analysis script...")
+from pycocotools.coco import COCO
+from pycocoevalcap.eval import COCOEvalCap
 
-# Set device to cuda:0 for consistency
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print("Using device:", device)
+# Create a directory for results if it doesn't exist
+results_dir = 'results'
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
 
-# Initialize BERT model for factual accuracy
-print("Loading BERT model...")
-bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-bert_model = BertModel.from_pretrained('bert-base-uncased').to(device)
-bert_model.eval()
+# Load ground truth
+coco = COCO('/root/project/Thesis_LLAVA/coco-caption/annotations/captions_val2014.json')
+print(f"Number of images in ground truth: {len(coco.imgs)}")
+print(f"Sample image IDs: {list(coco.imgs.keys())[:5]}")
 
-def get_bert_embedding(text):
-    """Get BERT embedding for a text."""
-    with torch.no_grad():
-        inputs = bert_tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512).to(device)
-        outputs = bert_model(**inputs)
-        # Use CLS token embedding as sentence representation
-        embeddings = outputs.last_hidden_state[:, 0, :]
-        return embeddings.squeeze(0)
+json_path = "/root/project/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_captions/merged_top_15k.json"
 
-def compute_factual_score(generated_caption, ground_truth_captions):
-    """Compute factual score using semantic similarity with ground truth captions."""
-    try:
-        gen_embedding = get_bert_embedding(generated_caption)
-        gt_embeddings = [get_bert_embedding(gt) for gt in ground_truth_captions]
-        similarities = [float(cosine_similarity([gen_embedding.cpu()], [gt.cpu()])[0][0]) for gt in gt_embeddings]
-        return float(max(similarities))
-    except Exception as e:
-        print(f"Error in compute_factual_score: {str(e)}")
-        return 0.0
+with open(json_path, "r") as f:
+    data = json.load(f)
 
-def analyze_generation_results(generation_embeddings_path, ground_truth_path):
-    """Analyze the generation results and compute factual scores."""
-    try:
-        # Load generation embeddings
-        print("Loading generation embeddings...")
-        with open(generation_embeddings_path, 'r') as f:
-            generation_results = json.load(f)
-        
-        # Load ground truth captions
-        print("Loading ground truth captions...")
-        df = pd.read_csv(ground_truth_path)
-        ground_truth_captions = {}
-        for _, row in df.iterrows():
-            image_id = row['image'].replace('.jpg', '')
-            captions = row['captions'].split(' ||| ')
-            ground_truth_captions[image_id] = captions
-        
-        # Analyze results
-        analysis_results = []
-        for result in tqdm(generation_results):
-            image_id = result['image_id']
-            caption = result['caption']
-            
-            # Get ground truth captions
-            gt_captions = ground_truth_captions.get(image_id, [])
-            
-            # Compute factual score
-            factual_score = compute_factual_score(caption, gt_captions)
-            
-            analysis_results.append({
-                'image_id': image_id,
-                'generated_caption': caption,
-                'ground_truth_captions': gt_captions,
-                'factual_score': factual_score
-            })
-        
-        return analysis_results
-        
-    except Exception as e:
-        print(f"Error in analyze_generation_results: {str(e)}")
-        traceback.print_exc()
-        raise
+preds = []
+for image_id, info in data.items():
+    preds.append({
+        "image_id": image_id,
+        "caption": info["generated_caption"]
+    })
 
-def main():
-    print("Starting main analysis...")
-    base_dir = os.path.dirname(__file__)
-    output_dir = os.path.join(base_dir, "keen_data")
-    
-    # Paths
-    generation_embeddings_path = os.path.join(output_dir, "generation_embeddings.json")
-    ground_truth_path = os.path.join(output_dir, "coco_val2017_captions.csv")
-    
-    # Analyze results
-    analysis_results = analyze_generation_results(generation_embeddings_path, ground_truth_path)
-    
-    # Save analysis results
-    output_path = os.path.join(output_dir, "generation_analysis.json")
-    with open(output_path, 'w') as f:
-        json.dump(analysis_results, f, indent=2)
-    print(f"Analysis results saved to {output_path}")
-    
-    # Print summary statistics
-    factual_scores = [result['factual_score'] for result in analysis_results]
-    avg_score = sum(factual_scores) / len(factual_scores)
-    print(f"\nSummary Statistics:")
-    print(f"Average factual score: {avg_score:.4f}")
-    print(f"Number of images analyzed: {len(analysis_results)}")
+# preds is now a list of dicts with image_id and caption
+print(preds[:2])  # Show a sample
 
-if __name__ == "__main__":
-    main()
+# Filter out image IDs that don't exist in the dataset
+valid_preds = []
+for pred in preds:
+    img_id = pred['image_id']
+    if img_id in coco.imgs:
+        valid_preds.append(pred)
+    else:
+        print(f"Warning: Image ID {img_id} not found in dataset, skipping.")
+
+print(f"Evaluating {len(valid_preds)} captions (filtered from {len(preds)} original captions)")
+
+if not valid_preds:
+    print("No valid image IDs found. Exiting.")
+    sys.exit(1)
+
+# Write to a temporary results file
+results_file = os.path.join(results_dir, 'temp_results.json')
+with open(results_file, 'w') as f:
+    json.dump(valid_preds, f)
+
+# Initialize COCO evaluation
+coco_res = coco.loadRes(results_file)
+coco_eval = COCOEvalCap(coco, coco_res)
+
+# Set the image IDs to evaluate
+coco_eval.params['image_id'] = [pred['image_id'] for pred in valid_preds]
+
+# Evaluate
+coco_eval.evaluate()
+
+# Print results
+print("\nResults:")
+for metric, score in coco_eval.eval.items():
+    print(f"{metric}: {score:.3f}")
+
+# Write per-image results to labels.csv in keen_data
+data_rows = []
+for eval_img in coco_eval.evalImgs:
+    row = {'image_id': eval_img['image_id']}
+    for metric in coco_eval.eval.keys():
+        row[metric] = eval_img.get(metric, None)
+    data_rows.append(row)
+
+labels_csv_path = os.path.join('keen_data', 'labels.csv')
+df = pd.DataFrame(data_rows)
+df.to_csv(labels_csv_path, index=False)
+print(f"Per-image evaluation results saved to {labels_csv_path}")

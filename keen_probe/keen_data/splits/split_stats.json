@@ -1,0 +1,10 @@
+{
+    "total_images": 67432,
+    "train_size": 47202,
+    "val_size": 10115,
+    "test_size": 10115,
+    "train_ratio": 0.6999940680982323,
+    "val_ratio": 0.15000296595088386,
+    "test_ratio": 0.15000296595088386,
+    "random_seed": 42
+}

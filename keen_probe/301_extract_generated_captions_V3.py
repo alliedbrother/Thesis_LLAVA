@@ -3,23 +3,16 @@ import h5py
 import json
 from tqdm import tqdm
 
-# Constants
-EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "2014_extracted_embeddings", "generation_embeddings_V41_part1.h5")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "keen_data", "2014_extracted_captions", "generated_captions_V41_part1.json")
-
-def extract_captions():
-    """Extract captions and associated metadata from the HDF5 embeddings file."""
-    print(f"Reading embeddings from: {EMBEDDINGS_PATH}")
-    print(f"Output will be saved to: {OUTPUT_PATH}")
-    
-    # Create output directory if it doesn't exist
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+def extract_captions_from_h5(h5_path, output_json_path):
+    """Extract captions and associated metadata from a single HDF5 embeddings file and save as JSON."""
+    print(f"Reading embeddings from: {h5_path}")
+    print(f"Output will be saved to: {output_json_path}")
     
     # Dictionary to store all captions
     all_captions = {}
     
     try:
-        with h5py.File(EMBEDDINGS_PATH, 'r') as f:
+        with h5py.File(h5_path, 'r') as f:
             # Get all image IDs
             image_ids = list(f.keys())
             print(f"Found {len(image_ids)} images")
@@ -55,9 +48,9 @@ def extract_captions():
                     continue
             
             # Save to JSON file
-            print(f"\nSaving {len(all_captions)} captions to {OUTPUT_PATH}")
-            with open(OUTPUT_PATH, 'w') as f:
-                json.dump(all_captions, f, indent=2)
+            print(f"\nSaving {len(all_captions)} captions to {output_json_path}")
+            with open(output_json_path, 'w') as f_json:
+                json.dump(all_captions, f_json, indent=2)
             
             print("Done!")
     
@@ -65,5 +58,19 @@ def extract_captions():
         print(f"Error reading HDF5 file: {e}")
         raise
 
+def extract_all_h5_to_json():
+    h5_folder = "/root/projects/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings"
+    output_folder = "/root/projects/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_captions"
+    os.makedirs(output_folder, exist_ok=True)
+    
+    h5_files = [f for f in os.listdir(h5_folder) if f.endswith('.h5')]
+    print(f"Found {len(h5_files)} .h5 files in {h5_folder}")
+    
+    for h5_file in h5_files:
+        h5_path = os.path.join(h5_folder, h5_file)
+        json_file = os.path.splitext(h5_file)[0] + ".json"
+        output_json_path = os.path.join(output_folder, json_file)
+        extract_captions_from_h5(h5_path, output_json_path)
+
 if __name__ == "__main__":
-    extract_captions() 
+    extract_all_h5_to_json() 

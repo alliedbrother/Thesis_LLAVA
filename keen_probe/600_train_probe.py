@@ -1,230 +1,555 @@
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-import json
-import torch
-import torch.nn as nn
-import pandas as pd
+import os
+import h5py
 import numpy as np
-from torch.utils.data import DataLoader, Dataset
-from sklearn.model_selection import train_test_split
-from keen_probe import KEENProbe
+import pandas as pd
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+import torch.nn as nn
+import torch.nn.functional as F
+from sklearn.metrics import mean_squared_error, r2_score
+import json
 from tqdm import tqdm
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+import itertools
+from datetime import datetime
+import logging
+import sys
 
-# Configuration
-NUM_EPOCHS = 50
-BATCH_SIZE = 16
-LEARNING_RATE = 1e-4
-PATIENCE = 5
-VAL_INTERVAL = 1
-FACTUAL_THRESHOLD = 0.80  # Threshold for binary classification
+# ==========================
+# CONFIGURATION
+# ==========================
 
-# Set device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Using device: {device}")
-
-base_dir = os.path.dirname(__file__)
-datasets_dir = os.path.join(base_dir, "keen_data", "generated_datasets")
-model_dir = os.path.join(base_dir, "keen_data", "models")
-os.makedirs(model_dir, exist_ok=True)
-
-# List of dataset files
-dataset_files = [
-    "dataset_vision_tower.csv",
-    "dataset_initial_layer.csv",
-    "dataset_middle_layer.csv",
-    "dataset_final_layer.csv",
-    "dataset_pre_generation.csv"
-]
-
-class EmbeddingDataset(Dataset):
-    def __init__(self, embeddings, labels):
-        self.embeddings = embeddings
-        self.labels = labels
-
-    def __len__(self):
-        return len(self.embeddings)
-
-    def __getitem__(self, idx):
-        return self.embeddings[idx], self.labels[idx]
-
-def load_and_preprocess_dataset(file_path):
-    print(f"\nLoading dataset: {file_path}")
-    df = pd.read_csv(file_path)
-
-    # Convert string embeddings to numpy arrays
-    embeddings = []
-    for emb_str in df['embedding']:
-        emb_str = emb_str.strip('[]').strip()
-        emb_array = np.fromstring(emb_str, sep=' ')
-        embeddings.append(emb_array)
+CONFIG = {
+    # Paths
+    "H5_FOLDER": "/root/projects/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings",
+    "LABELS_CSV": "/root/projects/Thesis_LLAVA/keen_probe/keen_data/labels.csv",
+    "SPLITS_DIR": "/root/projects/Thesis_LLAVA/keen_probe/keen_data/splits",
+    "MODEL_SAVE_DIR": "/root/projects/Thesis_LLAVA/keen_probe/keen_data/models_regression",
+    "LOG_DIR": "/root/projects/Thesis_LLAVA/keen_probe/keen_data/logs",
     
-    # Convert to torch tensors
-    embeddings = torch.tensor(np.array(embeddings), dtype=torch.float32)
+    # Model parameters
+    "REQ_EMBEDDINGS": "post_generation/step_final/layer_0/post_gen_embeddings",
+    "INPUT_DIM": 4096,        # Length of input embeddings
     
-    # Create binary labels based on threshold
-    labels = torch.tensor(
-        (df['factual_correctness_score'] > FACTUAL_THRESHOLD).astype(int),
-        dtype=torch.float32
+    # Hyperparameter search space
+    "HYPERPARAMS": {
+        "layer_sizes": [
+            [1024, 516, 256],
+        ],
+        "learning_rates": [0.01,0.05,0.1],
+        "batch_sizes": [1000,3000],
+        "dropout_rates": [0.1]
+    },
+    
+    # Training parameters
+    "EPOCHS": 50,
+    "EARLY_STOPPING_PATIENCE": 5,
+    "MIN_DELTA": 0.001,
+    "LR_PATIENCE": 3,
+    "LR_FACTOR": 0.5,
+    
+    # Cross-validation
+    "N_SPLITS": 5,
+    
+    # Device
+    "DEVICE": "cuda" if torch.cuda.is_available() else "cpu"
+}
+
+def setup_logging():
+    """Setup logging configuration."""
+    # Create logs directory if it doesn't exist
+    os.makedirs(CONFIG["LOG_DIR"], exist_ok=True)
+    
+    # Create a timestamp for the log file
+    embedding_name = CONFIG["REQ_EMBEDDINGS"].replace('/', '_')
+    log_file = os.path.join(CONFIG["LOG_DIR"], f'training_log_{embedding_name}.txt')
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(sys.stdout)
+        ]
     )
     
-    # Print the number of 1's and 0's
-    num_ones = int((labels == 1).sum().item())
-    num_zeros = int((labels == 0).sum().item())
-    print(f"Label distribution: 1's = {num_ones}, 0's = {num_zeros}")
-    
-    return embeddings, labels
+    return log_file
 
-def validate(model, val_loader):
-    model.eval()
-    total_loss = 0
-    correct = 0
-    total = 0
-    
-    with torch.no_grad():
-        for x, y in val_loader:
-            x, y = x.to(device), y.to(device)
-            y = y.unsqueeze(1)
-            pred = model(x)
-            loss = loss_fn(pred, y)
-            total_loss += loss.item()
-            
-            predicted = (pred > 0.5).float()
-            correct += (predicted == y).sum().item()
-            total += y.size(0)
-    
-    avg_loss = total_loss / len(val_loader)
-    accuracy = correct / total
-    return avg_loss, accuracy
+def load_labels(labels_csv):
+    """Load labels from CSV file."""
+    labels_df = pd.read_csv(labels_csv)
+    return dict(zip(labels_df['image_id'], labels_df['chair_regression_score']))
 
-# Train a probe for each dataset
-for dataset_file in dataset_files:
-    print(f"\n{'='*50}")
-    print(f"Training probe for {dataset_file}")
-    print(f"{'='*50}")
+def load_split_ids(split_type):
+    """Load image IDs for a specific split (train/val/test)."""
+    split_file = os.path.join(CONFIG["SPLITS_DIR"], f'{split_type}_ids.csv')
+    if not os.path.exists(split_file):
+        raise FileNotFoundError(f"Split file not found: {split_file}")
     
-    # Load and preprocess dataset
-    dataset_path = os.path.join(datasets_dir, dataset_file)
-    embeddings, labels = load_and_preprocess_dataset(dataset_path)
+    split_df = pd.read_csv(split_file)
+    return set(split_df['image_id'].values)
+
+def load_embeddings_and_scores(h5_folder, req_embeddings, labels_dict, split_ids):
+    """Load embeddings and scores for a specific split."""
+    all_embeddings = []
+    all_scores = []
+    total_files = 0
+    total_images = 0
+    total_matched = 0
     
-    # Create indices for splitting
-    indices = np.arange(len(embeddings))
-    np.random.shuffle(indices)
+    for filename in os.listdir(h5_folder):
+        if filename.endswith('.h5'):
+            total_files += 1
+            file_path = os.path.join(h5_folder, filename)
+            with h5py.File(file_path, 'r') as f:
+                file_images = 0
+                file_matched = 0
+                
+                for image_group in f.keys():
+                    file_images += 1
+                    if image_group in split_ids:
+                        try:
+                            # Navigate through the nested groups
+                            current = f[image_group]
+                            for path_part in req_embeddings.split('/'):
+                                current = current[path_part]
+                            
+                            # Get the embeddings
+                            emb = current[:]
+                            
+                            all_embeddings.append(emb)
+                            all_scores.append(labels_dict[image_group])
+                            file_matched += 1
+                            total_matched += 1
+                        except Exception as e:
+                            logging.error(f"Error loading {image_group}: {str(e)}")
+                
+                total_images += file_images
     
-    # Calculate split sizes
-    train_size = int(0.6 * len(indices))
-    val_size = int(0.2 * len(indices))
+    if not all_embeddings:
+        raise ValueError("No embeddings were successfully loaded. Check if the path exists in the HDF5 files.")
     
-    # Split indices
-    train_indices = indices[:train_size]
-    val_indices = indices[train_size:train_size + val_size]
-    test_indices = indices[train_size + val_size:]
+    return np.stack(all_embeddings), np.array(all_scores)
+
+class EmbeddingRegressor(nn.Module):
+    def __init__(self, input_dim, layer_sizes, dropout_rate=0.1):
+        super().__init__()
+        layers = []
+        prev_dim = input_dim
+        for size in layer_sizes:
+            layers.append(nn.Linear(prev_dim, size))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_rate))
+            prev_dim = size
+        layers.append(nn.Linear(prev_dim, 1))  # Output layer
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.model(x)
+
+def train_model(X_train, y_train, X_val, y_val, hyperparams):
+    """Train the model with validation monitoring and learning rate scheduling."""
+    # Convert data to PyTorch tensors
+    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
+    X_val_tensor = torch.tensor(X_val, dtype=torch.float32)
+    y_val_tensor = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1)
     
-    # Save split indices
-    split_indices = {
-        'train': train_indices.tolist(),
-        'val': val_indices.tolist(),
-        'test': test_indices.tolist()
-    }
-    
-    # Save split indices to file
-    model_name = os.path.splitext(dataset_file)[0]
-    split_path = os.path.join(model_dir, f"split_indices_{model_name}.json")
-    with open(split_path, 'w') as f:
-        json.dump(split_indices, f)
-    
-    # Create datasets using the indices
-    X_train, y_train = embeddings[train_indices], labels[train_indices]
-    X_val, y_val = embeddings[val_indices], labels[val_indices]
-    
-    # Create dataloaders
-    train_set = EmbeddingDataset(X_train, y_train)
-    val_set = EmbeddingDataset(X_val, y_val)
-    
-    train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=BATCH_SIZE)
-    
-    print(f"Train size: {len(X_train)}, Validation size: {len(X_val)}, Test size: {len(test_indices)}")
+    # Create data loaders
+    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    train_loader = DataLoader(train_dataset, batch_size=hyperparams['batch_sizes'], shuffle=True)
     
     # Initialize model
-    input_dim = embeddings.shape[1]
-    model = KEENProbe(input_dim=input_dim).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.01)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)
-    loss_fn = nn.BCELoss()
-
-# Training loop
-best_val_loss = float('inf')
-patience_counter = 0
-    best_model_path = os.path.join(model_dir, f"best_probe_{model_name}.pt")
-
-print("\nStarting training...")
-for epoch in range(NUM_EPOCHS):
-    model.train()
-    total_train_loss = 0
-    train_correct = 0
-    train_total = 0
+    model = EmbeddingRegressor(
+        input_dim=CONFIG["INPUT_DIM"],
+        layer_sizes=hyperparams['layer_sizes'],
+        dropout_rate=hyperparams['dropout_rates']
+    ).to(CONFIG["DEVICE"])
     
-    # Training phase
-    progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS}")
-    for x, y in progress_bar:
-        x, y = x.to(device), y.to(device)
-        y = y.unsqueeze(1)
-        
-        optimizer.zero_grad()
-        pred = model(x)
-        loss = loss_fn(pred, y)
-        loss.backward()
-        optimizer.step()
-        
-        total_train_loss += loss.item()
-        predicted = (pred > 0.5).float()
-        train_correct += (predicted == y).sum().item()
-        train_total += y.size(0)
-        
-        progress_bar.set_postfix({
-            'loss': f'{loss.item():.4f}',
-            'acc': f'{train_correct/train_total:.4f}'
-        })
+    # Initialize optimizer and loss function
+    optimizer = torch.optim.Adam(model.parameters(), lr=hyperparams['learning_rates'])
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=CONFIG["LR_FACTOR"], 
+                                patience=CONFIG["LR_PATIENCE"], verbose=False)
+    criterion = nn.MSELoss()
     
-    avg_train_loss = total_train_loss / len(train_loader)
-    train_accuracy = train_correct / train_total
+    # Training loop
+    best_val_loss = float('inf')
+    patience_counter = 0
+    history = {
+        'train_loss': [],
+        'val_loss': [],
+        'learning_rates': []
+    }
     
-    # Validation phase
-    if (epoch + 1) % VAL_INTERVAL == 0:
-        val_loss, val_accuracy = validate(model, val_loader)
-        print(f"\nEpoch {epoch+1}:")
-        print(f"Train Loss: {avg_train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}")
-        print(f"Val Loss: {val_loss:.4f}, Val Accuracy: {val_accuracy:.4f}")
+    for epoch in range(CONFIG["EPOCHS"]):
+        model.train()
+        total_loss = 0
         
-        # Learning rate scheduling
+        for X_batch, y_batch in train_loader:
+            X_batch, y_batch = X_batch.to(CONFIG["DEVICE"]), y_batch.to(CONFIG["DEVICE"])
+            
+            optimizer.zero_grad()
+            y_pred = model(X_batch)
+            loss = criterion(y_pred, y_batch)
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item() * X_batch.size(0)
+        
+        # Calculate average training loss
+        avg_train_loss = total_loss / len(train_dataset)
+        
+        # Validation
+        model.eval()
+        with torch.no_grad():
+            X_val_tensor = X_val_tensor.to(CONFIG["DEVICE"])
+            y_val_tensor = y_val_tensor.to(CONFIG["DEVICE"])
+            val_pred = model(X_val_tensor)
+            val_loss = criterion(val_pred, y_val_tensor).item()
+        
+        # Update learning rate
         scheduler.step(val_loss)
         
-            # Save best model
-        if val_loss < best_val_loss:
+        # Store history
+        history['train_loss'].append(avg_train_loss)
+        history['val_loss'].append(val_loss)
+        history['learning_rates'].append(optimizer.param_groups[0]['lr'])
+        
+        # Early stopping check
+        if val_loss < best_val_loss - CONFIG["MIN_DELTA"]:
             best_val_loss = val_loss
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'val_loss': val_loss,
-                'val_accuracy': val_accuracy
-            }, best_model_path)
             patience_counter = 0
         else:
             patience_counter += 1
+            if patience_counter >= CONFIG["EARLY_STOPPING_PATIENCE"]:
+                break
+    
+    return model, history
+
+def save_checkpoint(checkpoint, hyperparams):
+    """Save model checkpoint with hyperparameters."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    hyperparam_str = "_".join([f"{k}_{v}" for k, v in hyperparams.items()])
+    checkpoint_path = os.path.join(
+        CONFIG["MODEL_SAVE_DIR"], 
+        f'checkpoint_{timestamp}_{hyperparam_str}.pt'
+    )
+    torch.save(checkpoint, checkpoint_path)
+    print(f"Saved checkpoint to {checkpoint_path}")
+
+def load_best_model():
+    """Load the best model based on validation loss."""
+    checkpoints = [f for f in os.listdir(CONFIG["MODEL_SAVE_DIR"]) if f.startswith('checkpoint_')]
+    if not checkpoints:
+        raise ValueError("No checkpoints found!")
+    
+    best_val_loss = float('inf')
+    best_checkpoint = None
+    
+    for checkpoint_file in checkpoints:
+        checkpoint = torch.load(os.path.join(CONFIG["MODEL_SAVE_DIR"], checkpoint_file))
+        if checkpoint['val_loss'] < best_val_loss:
+            best_val_loss = checkpoint['val_loss']
+            best_checkpoint = checkpoint
+    
+    # Recreate model with best hyperparameters
+    model = EmbeddingRegressor(
+        input_dim=CONFIG["INPUT_DIM"],
+        layer_sizes=best_checkpoint['hyperparams']['layer_sizes'],
+        dropout_rate=best_checkpoint['hyperparams']['dropout_rate']
+    )
+    model.load_state_dict(best_checkpoint['model_state_dict'])
+    return model, best_checkpoint
+
+def evaluate_model(model, X, y, split_name):
+    """Evaluate model performance on a dataset."""
+    model.eval()
+    with torch.no_grad():
+        X_tensor = torch.tensor(X, dtype=torch.float32).to(CONFIG["DEVICE"])
+        y_tensor = torch.tensor(y, dtype=torch.float32).unsqueeze(1).to(CONFIG["DEVICE"])
+        y_pred = model(X_tensor)
+        
+        # Convert tensors to numpy arrays for metric calculation
+        y_np = y_tensor.cpu().numpy()
+        y_pred_np = y_pred.cpu().numpy()
+        
+        # Calculate metrics
+        mse = F.mse_loss(y_pred, y_tensor).item()
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_np, y_pred_np)
+        
+        metrics = {
+            'mse': mse,
+            'rmse': rmse,
+            'r2': r2
+        }
+        
+        print(f"\n{split_name} Set Metrics:")
+        print(f"MSE: {mse:.6f}")
+        print(f"RMSE: {rmse:.6f}")
+        print(f"R²: {r2:.6f}")
+        
+        return metrics
+
+def save_model_and_metrics(model, train_metrics, val_metrics, model_save_dir):
+    """Save the model and metrics."""
+    os.makedirs(model_save_dir, exist_ok=True)
+    
+    # Create model filename based on embedding path
+    embedding_name = CONFIG["REQ_EMBEDDINGS"].replace('/', '_')
+    model_path = os.path.join(model_save_dir, f'probe_model_{embedding_name}.pt')
+    
+    # Save model
+    torch.save(model.state_dict(), model_path)
+    
+    # Save metrics
+    metrics = {
+        'train': train_metrics,
+        'validation': val_metrics,
+        'model_params': {
+            'input_dim': CONFIG["INPUT_DIM"],
+            'layer_sizes': CONFIG["HYPERPARAMS"]["layer_sizes"][0],
+            'learning_rates': CONFIG["HYPERPARAMS"]["learning_rates"][0],
+            'batch_sizes': CONFIG["HYPERPARAMS"]["batch_sizes"][0],
+            'dropout_rates': CONFIG["HYPERPARAMS"]["dropout_rates"][0],
+            'epochs': CONFIG["EPOCHS"],
+            'embeddings_path': CONFIG["REQ_EMBEDDINGS"]
+        }
+    }
+    
+    metrics_path = os.path.join(model_save_dir, f'training_metrics_{embedding_name}.json')
+    with open(metrics_path, 'w') as f:
+        json.dump(metrics, f, indent=4)
+    
+    print(f"\nModel saved to: {model_path}")
+    print(f"Metrics saved to: {metrics_path}")
+
+def log_dataset_info(h5_folder, split_ids):
+    """Log dataset information."""
+    logging.info("\nDataset Information:")
+    logging.info("-" * 50)
+    logging.info(f"Number of images in split: {len(split_ids)}")
+    
+    total_files = 0
+    total_images = 0
+    total_matched = 0
+    
+    for filename in os.listdir(h5_folder):
+        if filename.endswith('.h5'):
+            total_files += 1
+            file_path = os.path.join(h5_folder, filename)
+            with h5py.File(file_path, 'r') as f:
+                file_images = len(f.keys())
+                file_matched = sum(1 for img_id in f.keys() if img_id in split_ids)
+                
+                logging.info(f"File: {filename}")
+                logging.info(f"  Total images: {file_images}")
+                logging.info(f"  Matched images: {file_matched}")
+                
+                total_images += file_images
+                total_matched += file_matched
+    
+    logging.info("\nProcessing complete:")
+    logging.info(f"Total files processed: {total_files}")
+    logging.info(f"Total images found: {total_images}")
+    logging.info(f"Total images matched: {total_matched}")
+    logging.info("-" * 50)
+
+def save_best_model_info(best_model_path, best_hyperparams, best_val_loss):
+    """Save information about the best model to a text file."""
+    info_path = os.path.join(CONFIG["MODEL_SAVE_DIR"], "best_model_info.txt")
+    with open(info_path, 'w') as f:
+        f.write("Best Model Information\n")
+        f.write("=" * 50 + "\n\n")
+        f.write(f"Model Path: {best_model_path}\n")
+        f.write(f"Validation Loss: {best_val_loss:.6f}\n\n")
+        f.write("Hyperparameters:\n")
+        for param, value in best_hyperparams.items():
+            f.write(f"- {param}: {value}\n")
+        f.write("\nModel Architecture:\n")
+        f.write(f"- Input Dimension: {CONFIG['INPUT_DIM']}\n")
+        f.write(f"- Layer Sizes: {best_hyperparams['layer_sizes']}\n")
+        f.write(f"- Dropout Rate: {best_hyperparams['dropout_rates']}\n")
+    
+    logging.info(f"\nBest model information saved to: {info_path}")
+
+def main():
+    """Main function to train the probe with hyperparameter tuning."""
+    # Setup logging
+    log_file = setup_logging()
+    logging.info("Starting probe training with hyperparameter tuning...")
+    logging.info(f"Log file: {log_file}")
+    
+    # Print detailed device information
+    logging.info("\nDevice Information:")
+    logging.info("=" * 50)
+    
+    # Check CUDA availability
+    cuda_available = torch.cuda.is_available()
+    logging.info(f"CUDA available: {cuda_available}")
+    
+    if cuda_available:
+        try:
+            # Get CUDA device count
+            device_count = torch.cuda.device_count()
+            logging.info(f"Number of CUDA devices: {device_count}")
             
-        if patience_counter >= PATIENCE:
-            print(f"\nEarly stopping triggered after {epoch+1} epochs")
-            break
+            # Get current CUDA device
+            current_device = torch.cuda.current_device()
+            logging.info(f"Current CUDA device index: {current_device}")
+            
+            # Get device name
+            device_name = torch.cuda.get_device_name(current_device)
+            logging.info(f"CUDA device name: {device_name}")
+            
+            # Get CUDA version
+            cuda_version = torch.version.cuda
+            logging.info(f"CUDA version: {cuda_version}")
+            
+            # Get PyTorch CUDA version
+            pytorch_cuda = torch.__version__
+            logging.info(f"PyTorch version: {pytorch_cuda}")
+            
+            # Set device to GPU
+            device = torch.device("cuda")
+            torch.cuda.set_device(current_device)
+            
+            # Test CUDA with a small tensor
+            test_tensor = torch.tensor([1.0], device=device)
+            logging.info("CUDA test tensor created successfully")
+            
+        except Exception as e:
+            logging.error(f"Error initializing CUDA: {str(e)}")
+            logging.info("Falling back to CPU")
+            device = torch.device("cpu")
+    else:
+        logging.warning("CUDA is not available. Using CPU instead.")
+        device = torch.device("cpu")
+    
+    logging.info(f"Final device being used: {device}")
+    logging.info("=" * 50)
+    
+    # Update CONFIG with the actual device
+    CONFIG["DEVICE"] = device
+    
+    # 1. Load labels and data
+    labels_dict = load_labels(CONFIG["LABELS_CSV"])
+    train_ids = load_split_ids('train')
+    val_ids = load_split_ids('val')
+    
+    # Print dataset information once at the start
+    logging.info(f"\nLoading embeddings from: {CONFIG['H5_FOLDER']}")
+    logging.info(f"Looking for path: {CONFIG['REQ_EMBEDDINGS']}")
+    logging.info(f"Number of images in split: {len(train_ids)}")
+    
+    total_files = 0
+    total_images = 0
+    total_matched = 0
+    
+    for filename in os.listdir(CONFIG["H5_FOLDER"]):
+        if filename.endswith('.h5'):
+            total_files += 1
+            file_path = os.path.join(CONFIG["H5_FOLDER"], filename)
+            with h5py.File(file_path, 'r') as f:
+                file_images = len(f.keys())
+                file_matched = sum(1 for img_id in f.keys() if img_id in train_ids)
+                
+                logging.info(f"File: {filename}")
+                logging.info(f"  Total images: {file_images}")
+                logging.info(f"  Matched images: {file_matched}")
+                
+                total_images += file_images
+                total_matched += file_matched
+    
+    logging.info("\nProcessing complete:")
+    logging.info(f"Total files processed: {total_files}")
+    logging.info(f"Total images found: {total_images}")
+    logging.info(f"Total images matched: {total_matched}")
+    
+    # 2. Generate hyperparameter combinations
+    hyperparam_combinations = [
+        dict(zip(CONFIG["HYPERPARAMS"].keys(), v)) 
+        for v in itertools.product(*CONFIG["HYPERPARAMS"].values())
+    ]
+    
+    # 3. Train models with different hyperparameters
+    best_val_loss = float('inf')
+    best_model = None
+    best_hyperparams = None
+    best_model_path = None
+    
+    logging.info("\nStarting hyperparameter search...")
+    logging.info(f"Total combinations to try: {len(hyperparam_combinations)}")
+    
+    for i, hyperparams in enumerate(hyperparam_combinations, 1):
+        logging.info(f"================================================")
+        logging.info(f"\nTrying combination {i}/{len(hyperparam_combinations)}")
+        logging.info(f"Hyperparameters: {hyperparams}")
+        
+        try:
+            # Load data for this fold
+            X_train, y_train = load_embeddings_and_scores(
+                CONFIG["H5_FOLDER"],
+                CONFIG["REQ_EMBEDDINGS"],
+                labels_dict,
+                train_ids
+            )
+            
+            X_val, y_val = load_embeddings_and_scores(
+                CONFIG["H5_FOLDER"],
+                CONFIG["REQ_EMBEDDINGS"],
+                labels_dict,
+                val_ids
+            )
+            
+            # Train model
+            model, history = train_model(X_train, y_train, X_val, y_val, hyperparams)
+            
+            # Evaluate on validation set
+            val_metrics = evaluate_model(model, X_val, y_val, "Validation")
+            
+            # Update best model if needed
+            if val_metrics['mse'] < best_val_loss:
+                best_val_loss = val_metrics['mse']
+                best_model = model
+                best_hyperparams = hyperparams
+                
+                # Save best model
+                embedding_name = CONFIG["REQ_EMBEDDINGS"].replace('/', '_')
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                best_model_path = os.path.join(
+                    CONFIG["MODEL_SAVE_DIR"], 
+                    f'best_model_{embedding_name}.pt'
+                )
+                torch.save({
+                    'model_state_dict': model.state_dict(),
+                    'hyperparams': hyperparams,
+                    'val_loss': best_val_loss,
+                    'history': history
+                }, best_model_path)
+                
+                logging.info(f"\nNew best model found!")
+                logging.info(f"Validation MSE: {best_val_loss:.6f}")
+                logging.info(f"Saved to: {best_model_path}")
+                
+        except Exception as e:
+            logging.error(f"Error training with hyperparameters {hyperparams}: {str(e)}")
+            continue
+    
+    # 4. Save best model information
+    if best_model is not None:
+        #save_best_model_info(best_model_path, best_hyperparams, best_val_loss)
+        logging.info("\nTraining complete!")
+        logging.info("\nBest Model Summary:")
+        logging.info("=" * 50)
+        logging.info(f"Model saved at: {best_model_path}")
+        logging.info(f"Validation Loss: {best_val_loss:.6f}")
+        logging.info("\nBest Hyperparameters:")
+        for param, value in best_hyperparams.items():
+            logging.info(f"- {param}: {value}")
+    else:
+        logging.error("\nNo successful model training completed!")
 
-print("\nTraining completed!")
-print(f"Best validation loss: {best_val_loss:.4f}")
-
-# Load best model for final save
-checkpoint = torch.load(best_model_path)
-model.load_state_dict(checkpoint['model_state_dict'])
-    torch.save(model.state_dict(), os.path.join(model_dir, f"probe_{model_name}.pt"))
-print(f"Best model saved with validation loss: {checkpoint['val_loss']:.4f} and accuracy: {checkpoint['val_accuracy']:.4f}")
-
-print("\nAll probes trained successfully!")
+if __name__ == "__main__":
+    main()

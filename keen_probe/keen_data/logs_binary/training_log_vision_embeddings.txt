@@ -1,0 +1,263 @@
+2025-05-20 07:32:58,159 - INFO - Starting probe training with hyperparameter tuning...
+2025-05-20 07:32:58,159 - INFO - Log file: /root/projects/Thesis_LLAVA/keen_probe/keen_data/logs_binary/training_log_vision_embeddings.txt
+2025-05-20 07:32:58,159 - INFO - 
+Device Information:
+2025-05-20 07:32:58,159 - INFO - ==================================================
+2025-05-20 07:32:58,159 - INFO - CUDA available: True
+2025-05-20 07:32:58,174 - INFO - Number of CUDA devices: 1
+2025-05-20 07:32:58,176 - INFO - Current CUDA device index: 0
+2025-05-20 07:32:58,176 - INFO - CUDA device name: NVIDIA GeForce RTX 4090
+2025-05-20 07:32:58,176 - INFO - CUDA version: 12.1
+2025-05-20 07:32:58,176 - INFO - PyTorch version: 2.1.2+cu121
+2025-05-20 07:32:58,265 - INFO - CUDA test tensor created successfully
+2025-05-20 07:32:58,265 - INFO - Final device being used: cuda
+2025-05-20 07:32:58,265 - INFO - ==================================================
+2025-05-20 07:32:58,414 - INFO - 
+Loading embeddings from: /root/projects/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings
+2025-05-20 07:32:58,414 - INFO - Looking for path: vision_embeddings
+2025-05-20 07:32:58,414 - INFO - Number of images in split: 47202
+2025-05-20 07:32:58,417 - INFO - File: generation_embeddings_V41_part5.h5
+2025-05-20 07:32:58,417 - INFO -   Total images: 3000
+2025-05-20 07:32:58,417 - INFO -   Matched images: 1987
+2025-05-20 07:32:58,419 - INFO - File: generation_embeddings_V41_part3.h5
+2025-05-20 07:32:58,419 - INFO -   Total images: 3000
+2025-05-20 07:32:58,419 - INFO -   Matched images: 1968
+2025-05-20 07:32:58,422 - INFO - File: generation_embeddings_V41_part8.h5
+2025-05-20 07:32:58,422 - INFO -   Total images: 3000
+2025-05-20 07:32:58,422 - INFO -   Matched images: 1940
+2025-05-20 07:32:58,424 - INFO - File: generation_embeddings_V41_part11.h5
+2025-05-20 07:32:58,424 - INFO -   Total images: 3000
+2025-05-20 07:32:58,424 - INFO -   Matched images: 1955
+2025-05-20 07:32:58,427 - INFO - File: generation_embeddings_V41_part18.h5
+2025-05-20 07:32:58,427 - INFO -   Total images: 3000
+2025-05-20 07:32:58,427 - INFO -   Matched images: 1985
+2025-05-20 07:32:58,429 - INFO - File: generation_embeddings_V41_part6.h5
+2025-05-20 07:32:58,429 - INFO -   Total images: 3000
+2025-05-20 07:32:58,429 - INFO -   Matched images: 1947
+2025-05-20 07:32:58,432 - INFO - File: generation_embeddings_V41_part23.h5
+2025-05-20 07:32:58,432 - INFO -   Total images: 3000
+2025-05-20 07:32:58,432 - INFO -   Matched images: 1961
+2025-05-20 07:32:58,434 - INFO - File: generation_embeddings_V41_part9.h5
+2025-05-20 07:32:58,434 - INFO -   Total images: 3000
+2025-05-20 07:32:58,434 - INFO -   Matched images: 1984
+2025-05-20 07:32:58,437 - INFO - File: generation_embeddings_V41_part19.h5
+2025-05-20 07:32:58,437 - INFO -   Total images: 3000
+2025-05-20 07:32:58,437 - INFO -   Matched images: 2002
+2025-05-20 07:32:58,439 - INFO - File: generation_embeddings_V41_part21.h5
+2025-05-20 07:32:58,439 - INFO -   Total images: 3000
+2025-05-20 07:32:58,439 - INFO -   Matched images: 1953
+2025-05-20 07:32:58,441 - INFO - File: generation_embeddings_V41_part26.h5
+2025-05-20 07:32:58,442 - INFO -   Total images: 3000
+2025-05-20 07:32:58,442 - INFO -   Matched images: 1946
+2025-05-20 07:32:58,444 - INFO - File: generation_embeddings_V41_part22.h5
+2025-05-20 07:32:58,444 - INFO -   Total images: 3000
+2025-05-20 07:32:58,444 - INFO -   Matched images: 1995
+2025-05-20 07:32:58,446 - INFO - File: generation_embeddings_V41_part1.h5
+2025-05-20 07:32:58,446 - INFO -   Total images: 3000
+2025-05-20 07:32:58,447 - INFO -   Matched images: 1996
+2025-05-20 07:32:58,449 - INFO - File: generation_embeddings_V41_part25.h5
+2025-05-20 07:32:58,449 - INFO -   Total images: 3000
+2025-05-20 07:32:58,449 - INFO -   Matched images: 1985
+2025-05-20 07:32:58,451 - INFO - File: generation_embeddings_V41_part2.h5
+2025-05-20 07:32:58,451 - INFO -   Total images: 3000
+2025-05-20 07:32:58,451 - INFO -   Matched images: 1960
+2025-05-20 07:32:58,454 - INFO - File: generation_embeddings_V41_part15.h5
+2025-05-20 07:32:58,454 - INFO -   Total images: 3000
+2025-05-20 07:32:58,454 - INFO -   Matched images: 1963
+2025-05-20 07:32:58,456 - INFO - File: generation_embeddings_V41_part10.h5
+2025-05-20 07:32:58,456 - INFO -   Total images: 3000
+2025-05-20 07:32:58,456 - INFO -   Matched images: 1984
+2025-05-20 07:32:58,459 - INFO - File: generation_embeddings_V41_part20.h5
+2025-05-20 07:32:58,459 - INFO -   Total images: 3000
+2025-05-20 07:32:58,459 - INFO -   Matched images: 2006
+2025-05-20 07:32:58,461 - INFO - File: generation_embeddings_V41_part4.h5
+2025-05-20 07:32:58,461 - INFO -   Total images: 3000
+2025-05-20 07:32:58,461 - INFO -   Matched images: 1916
+2025-05-20 07:32:58,464 - INFO - File: generation_embeddings_V41_part24.h5
+2025-05-20 07:32:58,464 - INFO -   Total images: 3000
+2025-05-20 07:32:58,464 - INFO -   Matched images: 1964
+2025-05-20 07:32:58,466 - INFO - File: generation_embeddings_V41_part0.h5
+2025-05-20 07:32:58,466 - INFO -   Total images: 3000
+2025-05-20 07:32:58,466 - INFO -   Matched images: 1963
+2025-05-20 07:32:58,469 - INFO - File: generation_embeddings_V41_part16.h5
+2025-05-20 07:32:58,469 - INFO -   Total images: 3000
+2025-05-20 07:32:58,469 - INFO -   Matched images: 1901
+2025-05-20 07:32:58,471 - INFO - File: generation_embeddings_V41_part17.h5
+2025-05-20 07:32:58,471 - INFO -   Total images: 3000
+2025-05-20 07:32:58,471 - INFO -   Matched images: 1976
+2025-05-20 07:32:58,473 - INFO - File: generation_embeddings_V41_part7.h5
+2025-05-20 07:32:58,474 - INFO -   Total images: 3000
+2025-05-20 07:32:58,474 - INFO -   Matched images: 1965
+2025-05-20 07:32:58,474 - INFO - 
+Processing complete:
+2025-05-20 07:32:58,474 - INFO - Total files processed: 24
+2025-05-20 07:32:58,474 - INFO - Total images found: 72000
+2025-05-20 07:32:58,474 - INFO - Total images matched: 47202
+2025-05-20 07:32:58,474 - INFO - 
+Starting hyperparameter search...
+2025-05-20 07:32:58,474 - INFO - Total combinations to try: 6
+2025-05-20 07:32:58,474 - INFO - ================================================
+2025-05-20 07:32:58,474 - INFO - 
+Trying combination 1/6
+2025-05-20 07:32:58,474 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:33:10,381 - INFO - ================================================
+2025-05-20 07:33:10,381 - INFO - 
+Trying combination 2/6
+2025-05-20 07:33:10,381 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:33:24,225 - INFO - ================================================
+2025-05-20 07:33:24,225 - INFO - 
+Trying combination 3/6
+2025-05-20 07:33:24,225 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:33:35,695 - INFO - ================================================
+2025-05-20 07:33:35,695 - INFO - 
+Trying combination 4/6
+2025-05-20 07:33:35,695 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:33:47,871 - INFO - ================================================
+2025-05-20 07:33:47,871 - INFO - 
+Trying combination 5/6
+2025-05-20 07:33:47,871 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:33:58,520 - INFO - ================================================
+2025-05-20 07:33:58,520 - INFO - 
+Trying combination 6/6
+2025-05-20 07:33:58,520 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:34:09,803 - ERROR - 
+No successful model training completed!
+2025-05-20 07:38:25,140 - INFO - Starting probe training with hyperparameter tuning...
+2025-05-20 07:38:25,140 - INFO - Log file: /root/projects/Thesis_LLAVA/keen_probe/keen_data/logs_binary/training_log_vision_embeddings.txt
+2025-05-20 07:38:25,140 - INFO - 
+Device Information:
+2025-05-20 07:38:25,140 - INFO - ==================================================
+2025-05-20 07:38:25,140 - INFO - CUDA available: True
+2025-05-20 07:38:25,155 - INFO - Number of CUDA devices: 1
+2025-05-20 07:38:25,157 - INFO - Current CUDA device index: 0
+2025-05-20 07:38:25,157 - INFO - CUDA device name: NVIDIA GeForce RTX 4090
+2025-05-20 07:38:25,157 - INFO - CUDA version: 12.1
+2025-05-20 07:38:25,157 - INFO - PyTorch version: 2.1.2+cu121
+2025-05-20 07:38:25,246 - INFO - CUDA test tensor created successfully
+2025-05-20 07:38:25,246 - INFO - Final device being used: cuda
+2025-05-20 07:38:25,247 - INFO - ==================================================
+2025-05-20 07:38:25,396 - INFO - 
+Loading embeddings from: /root/projects/Thesis_LLAVA/keen_probe/keen_data/2014_extracted_embeddings
+2025-05-20 07:38:25,396 - INFO - Looking for path: vision_embeddings
+2025-05-20 07:38:25,396 - INFO - Number of images in split: 47202
+2025-05-20 07:38:25,399 - INFO - File: generation_embeddings_V41_part5.h5
+2025-05-20 07:38:25,399 - INFO -   Total images: 3000
+2025-05-20 07:38:25,399 - INFO -   Matched images: 1987
+2025-05-20 07:38:25,402 - INFO - File: generation_embeddings_V41_part3.h5
+2025-05-20 07:38:25,402 - INFO -   Total images: 3000
+2025-05-20 07:38:25,402 - INFO -   Matched images: 1968
+2025-05-20 07:38:25,404 - INFO - File: generation_embeddings_V41_part8.h5
+2025-05-20 07:38:25,404 - INFO -   Total images: 3000
+2025-05-20 07:38:25,404 - INFO -   Matched images: 1940
+2025-05-20 07:38:25,407 - INFO - File: generation_embeddings_V41_part11.h5
+2025-05-20 07:38:25,407 - INFO -   Total images: 3000
+2025-05-20 07:38:25,407 - INFO -   Matched images: 1955
+2025-05-20 07:38:25,409 - INFO - File: generation_embeddings_V41_part18.h5
+2025-05-20 07:38:25,409 - INFO -   Total images: 3000
+2025-05-20 07:38:25,409 - INFO -   Matched images: 1985
+2025-05-20 07:38:25,412 - INFO - File: generation_embeddings_V41_part6.h5
+2025-05-20 07:38:25,412 - INFO -   Total images: 3000
+2025-05-20 07:38:25,412 - INFO -   Matched images: 1947
+2025-05-20 07:38:25,414 - INFO - File: generation_embeddings_V41_part23.h5
+2025-05-20 07:38:25,414 - INFO -   Total images: 3000
+2025-05-20 07:38:25,414 - INFO -   Matched images: 1961
+2025-05-20 07:38:25,417 - INFO - File: generation_embeddings_V41_part9.h5
+2025-05-20 07:38:25,417 - INFO -   Total images: 3000
+2025-05-20 07:38:25,417 - INFO -   Matched images: 1984
+2025-05-20 07:38:25,419 - INFO - File: generation_embeddings_V41_part19.h5
+2025-05-20 07:38:25,419 - INFO -   Total images: 3000
+2025-05-20 07:38:25,419 - INFO -   Matched images: 2002
+2025-05-20 07:38:25,422 - INFO - File: generation_embeddings_V41_part21.h5
+2025-05-20 07:38:25,422 - INFO -   Total images: 3000
+2025-05-20 07:38:25,422 - INFO -   Matched images: 1953
+2025-05-20 07:38:25,424 - INFO - File: generation_embeddings_V41_part26.h5
+2025-05-20 07:38:25,424 - INFO -   Total images: 3000
+2025-05-20 07:38:25,424 - INFO -   Matched images: 1946
+2025-05-20 07:38:25,427 - INFO - File: generation_embeddings_V41_part22.h5
+2025-05-20 07:38:25,427 - INFO -   Total images: 3000
+2025-05-20 07:38:25,427 - INFO -   Matched images: 1995
+2025-05-20 07:38:25,429 - INFO - File: generation_embeddings_V41_part1.h5
+2025-05-20 07:38:25,429 - INFO -   Total images: 3000
+2025-05-20 07:38:25,429 - INFO -   Matched images: 1996
+2025-05-20 07:38:25,431 - INFO - File: generation_embeddings_V41_part25.h5
+2025-05-20 07:38:25,432 - INFO -   Total images: 3000
+2025-05-20 07:38:25,432 - INFO -   Matched images: 1985
+2025-05-20 07:38:25,434 - INFO - File: generation_embeddings_V41_part2.h5
+2025-05-20 07:38:25,434 - INFO -   Total images: 3000
+2025-05-20 07:38:25,434 - INFO -   Matched images: 1960
+2025-05-20 07:38:25,436 - INFO - File: generation_embeddings_V41_part15.h5
+2025-05-20 07:38:25,436 - INFO -   Total images: 3000
+2025-05-20 07:38:25,437 - INFO -   Matched images: 1963
+2025-05-20 07:38:25,439 - INFO - File: generation_embeddings_V41_part10.h5
+2025-05-20 07:38:25,439 - INFO -   Total images: 3000
+2025-05-20 07:38:25,439 - INFO -   Matched images: 1984
+2025-05-20 07:38:25,441 - INFO - File: generation_embeddings_V41_part20.h5
+2025-05-20 07:38:25,441 - INFO -   Total images: 3000
+2025-05-20 07:38:25,441 - INFO -   Matched images: 2006
+2025-05-20 07:38:25,444 - INFO - File: generation_embeddings_V41_part4.h5
+2025-05-20 07:38:25,444 - INFO -   Total images: 3000
+2025-05-20 07:38:25,444 - INFO -   Matched images: 1916
+2025-05-20 07:38:25,446 - INFO - File: generation_embeddings_V41_part24.h5
+2025-05-20 07:38:25,446 - INFO -   Total images: 3000
+2025-05-20 07:38:25,446 - INFO -   Matched images: 1964
+2025-05-20 07:38:25,449 - INFO - File: generation_embeddings_V41_part0.h5
+2025-05-20 07:38:25,449 - INFO -   Total images: 3000
+2025-05-20 07:38:25,449 - INFO -   Matched images: 1963
+2025-05-20 07:38:25,451 - INFO - File: generation_embeddings_V41_part16.h5
+2025-05-20 07:38:25,451 - INFO -   Total images: 3000
+2025-05-20 07:38:25,451 - INFO -   Matched images: 1901
+2025-05-20 07:38:25,454 - INFO - File: generation_embeddings_V41_part17.h5
+2025-05-20 07:38:25,454 - INFO -   Total images: 3000
+2025-05-20 07:38:25,454 - INFO -   Matched images: 1976
+2025-05-20 07:38:25,456 - INFO - File: generation_embeddings_V41_part7.h5
+2025-05-20 07:38:25,456 - INFO -   Total images: 3000
+2025-05-20 07:38:25,456 - INFO -   Matched images: 1965
+2025-05-20 07:38:25,457 - INFO - 
+Processing complete:
+2025-05-20 07:38:25,457 - INFO - Total files processed: 24
+2025-05-20 07:38:25,457 - INFO - Total images found: 72000
+2025-05-20 07:38:25,457 - INFO - Total images matched: 47202
+2025-05-20 07:38:25,457 - INFO - 
+Starting hyperparameter search...
+2025-05-20 07:38:25,457 - INFO - Total combinations to try: 6
+2025-05-20 07:38:25,457 - INFO - ================================================
+2025-05-20 07:38:25,457 - INFO - 
+Trying combination 1/6
+2025-05-20 07:38:25,457 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:38:36,375 - INFO - 
+New best model found!
+2025-05-20 07:38:36,375 - INFO - Validation ROC-AUC: 0.736829
+2025-05-20 07:38:36,376 - INFO - Saved to: /root/projects/Thesis_LLAVA/keen_probe/keen_data/models_binary/best_model_vision_embeddings.pt
+2025-05-20 07:38:36,376 - INFO - ================================================
+2025-05-20 07:38:36,376 - INFO - 
+Trying combination 2/6
+2025-05-20 07:38:36,376 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.01, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:38:47,409 - INFO - ================================================
+2025-05-20 07:38:47,409 - INFO - 
+Trying combination 3/6
+2025-05-20 07:38:47,409 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:38:57,829 - INFO - ================================================
+2025-05-20 07:38:57,829 - INFO - 
+Trying combination 4/6
+2025-05-20 07:38:57,829 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.05, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:39:09,385 - INFO - ================================================
+2025-05-20 07:39:09,385 - INFO - 
+Trying combination 5/6
+2025-05-20 07:39:09,385 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 1000, 'dropout_rates': 0.1}
+2025-05-20 07:39:19,750 - INFO - ================================================
+2025-05-20 07:39:19,750 - INFO - 
+Trying combination 6/6
+2025-05-20 07:39:19,750 - INFO - Hyperparameters: {'layer_sizes': [1024, 516, 256], 'learning_rates': 0.1, 'batch_sizes': 3000, 'dropout_rates': 0.1}
+2025-05-20 07:39:30,474 - INFO - 
+Training complete!
+2025-05-20 07:39:30,475 - INFO - 
+Best Model Summary:
+2025-05-20 07:39:30,475 - INFO - ==================================================
+2025-05-20 07:39:30,475 - INFO - Model saved at: /root/projects/Thesis_LLAVA/keen_probe/keen_data/models_binary/best_model_vision_embeddings.pt
+2025-05-20 07:39:30,475 - INFO - Validation ROC-AUC: 0.736829
+2025-05-20 07:39:30,475 - INFO - 
+Best Hyperparameters:
+2025-05-20 07:39:30,475 - INFO - - layer_sizes: [1024, 516, 256]
+2025-05-20 07:39:30,475 - INFO - - learning_rates: 0.01
+2025-05-20 07:39:30,475 - INFO - - batch_sizes: 1000
+2025-05-20 07:39:30,475 - INFO - - dropout_rates: 0.1

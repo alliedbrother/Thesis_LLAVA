@@ -176,7 +176,7 @@ annotations/instances_train2017.json
 annotations/person_keypoints_train2017.json
 
 # Large data files
-keen_probe/keen_data/detailed_embeddings.json
+keen_probe/keen_data/2014_extracted_embeddings
 keen_probe/keen_data/generation_embeddings.h5
 keen_probe/keen_data/generation_embeddings.json
 
@@ -191,6 +191,5 @@ keen_probe/keen_data/pre_generation_embeddings_V4.json
 annotations/captions_train2017.json
 
 
-keen_probe/keen_data/
 coco_val2014/
 coco_val2017/

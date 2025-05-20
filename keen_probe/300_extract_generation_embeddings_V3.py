@@ -36,7 +36,7 @@ def load_image_ids():
         image_files = [f for f in os.listdir(IMAGE_DIR) if f.endswith('.jpg')]
         
         # Extract image IDs from filenames (remove .jpg extension)
-        image_ids = sorted([os.path.splitext(f)[0] for f in image_files])
+        image_ids = sorted([os.path.splitext(f)[0] for f in image_files])[::-1]
         
         print(f"Found {len(image_ids)} images in {IMAGE_DIR}")
         return image_ids
@@ -98,7 +98,6 @@ def load_images_batch(image_ids, image_dir, batch_size=4):
             if not os.path.exists(image_path):
                 print(f"Warning: Image {img_id} not found at {image_path}")
                 continue
-                
             image = Image.open(image_path).convert('RGB')
             tensor = process_image_optimized(image, image_processor)
             
